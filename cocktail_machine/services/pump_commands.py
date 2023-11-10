@@ -1,13 +1,49 @@
 import logging
 import threading
+import time
 
 import requests
+from flask_sock import Sock
 
+from cocktail_machine import database
 from cocktail_machine.exceptions.cocktail_machine_exception import PumpInUseException, BadRequestException
-from cocktail_machine.services import pump_service
+from cocktail_machine.services import pump_service, machine_service
 from cocktail_machine.services.singleton import Singleton
 
 sem = threading.Semaphore()
+sock = Sock()
+
+
+@sock.route('/echo')
+def echo(ws):
+    state = 'offline'
+    logging.info(f'state1: {state}')
+    while True:
+        logging.info(f'state2: {state}')
+
+        if state != 'locked' and _is_locked():
+            state = _notify(ws, 'locked')
+        else:
+            try:
+                machines = machine_service.get()
+                if len(machines) == 0:
+                    state = _notify(ws, '')
+                else:
+                    r = requests.post(f'{machines[0]["domain"]}/api/health')
+                    if r.status_code != 200 and state != 'offline':
+                        state = _notify(ws, 'offline')
+                    elif state != 'online':
+                        state = _notify(ws, 'online')
+            except:
+                if state != 'offline':
+                    state = _notify(ws, 'offline')
+        time.sleep(3)
+
+
+def _notify(ws, state):
+    logging.info(f'state: {state}')
+    ws.send(state)
+    return state
 
 
 def _is_locked():
@@ -29,6 +65,23 @@ def _run_request(cocktail_machine_request):
         raise e
 
 
+def _add_history(mr):
+    timestamp = round(time.time())
+    conn = database.get_connection()
+    cur = conn.cursor()
+    names = [p.pump['name'] for p in mr.pump_requests]
+    seconds = [str(p.seconds) for p in mr.pump_requests]
+    flow_rates_in_ml_per_sec = [str(p.pump['flowRateInMlPerSec']) for p in mr.pump_requests]
+    ports = [str(p.pump['port']) for p in mr.pump_requests]
+
+    cur.execute("""INSERT INTO history (timestamp, name, port, seconds, flowRateInMlPerSec, machineName, domain) 
+                VALUES(%s, %s, %s, %s, %s, %s, %s) RETURNING id;""",
+                (timestamp, "-".join(names), "-".join(ports), "-".join(seconds), "-".join(flow_rates_in_ml_per_sec),
+                 mr.machine['name'], mr.machine['domain']))
+    conn.commit()
+    conn.close()
+
+
 @Singleton
 class PumpCommands:
 
@@ -41,7 +94,9 @@ class PumpCommands:
 
         sem.acquire()
         pump_request = PumpRequest(pump, seconds=seconds, ml=ml)
-        _run_request(MachineRequest([pump_request]))
+        machine_request = MachineRequest([pump_request])
+        _add_history(machine_request)
+        _run_request(machine_request)
         sem.release()
 
     def execute_recipe(self, recipe):
@@ -64,7 +119,9 @@ class PumpCommands:
                 result = eval(exp) * 29.5735
                 pump_requests.append(PumpRequest(pump, ml=result))
 
-            _run_request(MachineRequest(pump_requests))
+            machine_request = MachineRequest(pump_requests)
+            _add_history(machine_request)
+            _run_request(machine_request)
 
             sem.release()
         except Exception as e:
@@ -82,13 +139,14 @@ class PumpRequest:
 
 
 class MachineRequest:
-    def __init__(self, pump_request):
-        machine = self._get_machine(pump_request)
+    def __init__(self, pump_requests):
+        self.machine = self._get_machine(pump_requests)
 
-        ports = "-".join([str(p.pump['port']) for p in pump_request])
-        seconds = "-".join([str(p.seconds) for p in pump_request])
-        self.url = f"{machine['domain']}/api/pump/{ports}/seconds/{seconds}"
-        self.timeout = max([p.seconds for p in pump_request]) + 2
+        ports = "-".join([str(p.pump['port']) for p in pump_requests])
+        seconds = "-".join([str(p.seconds) for p in pump_requests])
+        self.url = f"{self.machine['domain']}/api/pump/{ports}/seconds/{seconds}"
+        self.timeout = max([p.seconds for p in pump_requests]) + 2
+        self.pump_requests = pump_requests
 
     def _get_machine(self, pump_request):
         machines = set([p.pump['machine']['id'] for p in pump_request])

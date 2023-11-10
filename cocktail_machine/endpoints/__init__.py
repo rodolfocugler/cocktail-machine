@@ -1,6 +1,7 @@
 from flask_restx import Api
 
 from cocktail_machine.endpoints.commands import api as ns_commands
+from cocktail_machine.endpoints.history import api as ns_history
 from cocktail_machine.endpoints.machines import api as ns_machines
 from cocktail_machine.endpoints.pumps import api as ns_pumps
 
@@ -26,3 +27,4 @@ api = Api(
 api.add_namespace(ns_pumps, path="/api")
 api.add_namespace(ns_machines, path="/api")
 api.add_namespace(ns_commands, path="/api")
+api.add_namespace(ns_history, path="/api")

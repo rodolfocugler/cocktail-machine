@@ -48,7 +48,12 @@ def crete_tables():
     (
         id INT PRIMARY KEY NOT NULL GENERATED ALWAYS AS IDENTITY,
         timestamp BIGINT NOT NULL,
-        drinkId INT NOT NULL
+        name TEXT NOT NULL,
+        port TEXT NOT NULL,
+        seconds TEXT NOT NULL,
+        flowRateInMlPerSec TEXT NOT NULL,
+        machineName VARCHAR (255) NOT NULL,
+        domain VARCHAR (255) NOT NULL
     );
     """)
     conn.commit()

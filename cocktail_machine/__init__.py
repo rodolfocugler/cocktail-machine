@@ -5,6 +5,8 @@ from flask import Flask
 from flask_basicauth import BasicAuth
 from flask_cors import CORS
 
+from cocktail_machine.services import pump_commands
+
 
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
@@ -22,6 +24,9 @@ def create_app():
 
     if conf.BASIC_AUTH_FORCE:
         BasicAuth(app)
+
+    pump_commands.sock.init_app(app)
+
     from cocktail_machine import database
     database.init()
     return app

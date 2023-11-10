@@ -12,3 +12,4 @@ class Config:
     RECREATE_DATABASE = os.getenv("RECREATE_DATABASE", "False") == "True"
     DUMMY_DATABASE = os.getenv("DUMMY_DATABASE", "False") == "True"
     CORS = os.getenv("CORS", "http://192.168.178.*")
+    SOCK_SERVER_OPTIONS = {'ping_interval': 25}

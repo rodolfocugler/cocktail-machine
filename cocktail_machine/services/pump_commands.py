@@ -17,13 +17,10 @@ sock = Sock()
 @sock.route('/echo')
 def echo(ws):
     state = 'offline'
-    logging.info(f'state1: {state}')
     while True:
-        logging.info(f'state2: {state}')
-
         if state != 'locked' and _is_locked():
             state = _notify(ws, 'locked')
-        else:
+        elif not _is_locked():
             try:
                 machines = machine_service.get()
                 if len(machines) == 0:
@@ -37,7 +34,7 @@ def echo(ws):
             except:
                 if state != 'offline':
                     state = _notify(ws, 'offline')
-        time.sleep(3)
+        time.sleep(1.5)
 
 
 def _notify(ws, state):
@@ -99,7 +96,7 @@ class PumpCommands:
         _run_request(machine_request)
         sem.release()
 
-    def execute_recipe(self, recipe):
+    def execute_recipe(self, recipe, disabledIngredients):
         if _is_locked():
             raise PumpInUseException()
 
@@ -111,7 +108,11 @@ class PumpCommands:
             [ingredients.update({p['name'].lower(): p}) for p in pumps]
             keys = {}
             [keys.update({i: ingredients[recipe[f'strIngredient{i}'].lower()]}) for i in range(1, 15)
-             if recipe[f'strIngredient{i}'] is not None and recipe[f'strIngredient{i}'].lower() in ingredients]
+             if i not in disabledIngredients and recipe[f'strIngredient{i}'] is not None and recipe[
+                 f'strIngredient{i}'].lower() in ingredients]
+
+            if len(keys.items()) == 0:
+                raise BadRequestException('No ingredients to prepare the drink', 1002)
 
             pump_requests = []
             for i, pump in keys.items():
@@ -124,7 +125,7 @@ class PumpCommands:
             _run_request(machine_request)
 
             sem.release()
-        except Exception as e:
+        except BaseException as e:
             sem.release()
             raise e
 

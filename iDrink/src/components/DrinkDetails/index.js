@@ -8,148 +8,129 @@ import glass from '../../assets/glass.svg';
 
 import colors from '../../utils/colors';
 import {
-  Wrapper,
-  Overlay,
-  Container,
-  CloseButton,
-  DrinkImage,
-  DrinkName,
-  DrinkTags,
-  DrinkInformations,
-  Content,
-  DrinkIngredients,
-  DrinkInstructions,
+    Wrapper,
+    Overlay,
+    Container,
+    CloseButton,
+    DrinkImage,
+    DrinkName,
+    DrinkTags,
+    DrinkInformations,
+    Content,
+    DrinkIngredients,
+    DrinkInstructions,
 } from './styles';
 import {OrderButton} from "./styles";
 import cocktailMachineApi from "../../services/cocktail-machine-api";
+import index from "styled-components/macro";
 
-const amountIngredients = [
-  0,
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  8,
-  9,
-  10,
-  11,
-  12,
-  13,
-  14,
-  15,
-];
+const amountIngredients = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,];
 
 function DrinkDetails({drink: drink_id, hidden, onClose, pumps}) {
-  const [drink, setDrink] = useState({});
-  const [prepareEnabled, setPrepareEnabled] = useState(false);
+    const [drink, setDrink] = useState({});
+    const [prepareEnabled, setPrepareEnabled] = useState(false);
+    const [disabledIngredients, setDisabledIngredients] = useState(new Set());
 
-  async function handlePrepare() {
-    const response = await cocktailMachineApi.post(`/commands/receipt/id/${drink_id}`);
-
-  }
-
-  useEffect(() => {
-    async function loadDrink() {
-      const response = await api.get('lookup.php', {
-        params: {
-          i: drink_id,
-        },
-      });
-
-      setDrink(response.data.drinks[0]);
-      let pumpNames = pumps.map((p) => p.name.toLowerCase());
-      setPrepareEnabled(amountIngredients.some((index) =>
-        response.data.drinks[0][`strIngredient${index}`] && pumpNames.indexOf(response.data.drinks[0][`strIngredient${index}`].toLowerCase()) > -1
-      ));
+    async function handlePrepare() {
+        const response = await cocktailMachineApi.post(`/commands/receipt/id/${drink_id}`,
+            JSON.stringify({disabledIngredients: Array.from(disabledIngredients)}));
     }
 
-    if (drink_id) {
-      loadDrink();
+    useEffect(() => {
+        async function loadDrink() {
+            const response = await api.get('lookup.php', {
+                params: {
+                    i: drink_id,
+                },
+            });
+
+            setDrink(response.data.drinks[0]);
+            let pumpNames = pumps.map((p) => p.name.toLowerCase());
+            setPrepareEnabled(amountIngredients.some((index) => response.data.drinks[0][`strIngredient${index}`] && pumpNames.indexOf(response.data.drinks[0][`strIngredient${index}`].toLowerCase()) > -1));
+        }
+
+        if (drink_id) {
+            setDisabledIngredients(new Set());
+            loadDrink();
+        }
+    }, [drink_id]);
+
+    const disableIngredient = (index) => {
+        disabledIngredients.has(index) ? disabledIngredients.delete(index) : disabledIngredients.add(index)
+        setDisabledIngredients(new Set(disabledIngredients.values()));
     }
-  }, [drink_id]);
 
-  return (
-    <Wrapper hidden={hidden}>
-      <Overlay hidden={hidden} onClick={onClose}/>
+    return (<Wrapper hidden={hidden}>
+        <Overlay hidden={hidden} onClick={onClose}/>
 
-      <Container hidden={hidden}>
-        <CloseButton onClick={onClose}>
-          <MdClose color={colors.primaryColor} size={48}/>
-        </CloseButton>
+        <Container hidden={hidden}>
+            <CloseButton onClick={onClose}>
+                <MdClose color={colors.primaryColor} size={48}/>
+            </CloseButton>
 
-        <DrinkImage>
-          <img src={drink.strDrinkThumb} alt="Thumbnail"/>
-        </DrinkImage>
+            <DrinkImage>
+                <img src={drink.strDrinkThumb} alt="Thumbnail"/>
+            </DrinkImage>
 
-        <DrinkName>{drink.strDrink}</DrinkName>
+            <DrinkName>{drink.strDrink}</DrinkName>
 
-        {prepareEnabled && <OrderButton onClick={handlePrepare}>Prepare</OrderButton>}
-        {!prepareEnabled && <OrderButton className={"disabled"}>Drink not possible</OrderButton>}
+            {prepareEnabled && <OrderButton onClick={handlePrepare}>Prepare</OrderButton>}
+            {!prepareEnabled && <OrderButton className={"disabled"}>Drink not possible</OrderButton>}
 
-        <DrinkTags>
-          {drink.tags && drink.tags.join(',').map((tag) => <span>{tag}</span>)}
-        </DrinkTags>
+            <DrinkTags>
+                {drink.tags && drink.tags.join(',').map((tag) => <span>{tag}</span>)}
+            </DrinkTags>
 
-        <DrinkInformations>
-          <div>
-            <i>
-              <img src={alcoholic} alt="Alcoholic" width="18"/>
-            </i>
-            <span>{drink.strAlcoholic}</span>
-          </div>
+            <DrinkInformations>
+                <div>
+                    <i>
+                        <img src={alcoholic} alt="Alcoholic" width="18"/>
+                    </i>
+                    <span>{drink.strAlcoholic}</span>
+                </div>
 
-          <div>
-            <i>
-              <img src={glass} alt="Glass" width="18"/>
-            </i>
-            <span>{drink.strGlass}</span>
-          </div>
-        </DrinkInformations>
+                <div>
+                    <i>
+                        <img src={glass} alt="Glass" width="18"/>
+                    </i>
+                    <span>{drink.strGlass}</span>
+                </div>
+            </DrinkInformations>
 
-        <Content>
-          <DrinkIngredients>
-            <span>ingredients</span>
+            <Content>
+                <DrinkIngredients>
+                    <span>ingredients</span>
+                    <ul>
+                        {amountIngredients.map((index) => {
+                            if (drink[`strIngredient${index}`]) {
+                                return (<li key={drink[`strIngredient${index}`]}>
+                      <span onClick={() => disableIngredient(index)}
+                            className={disabledIngredients.has(index) ? "disabled" : undefined}>
+                        {drink[`strIngredient${index}`]}
+                      </span>
 
-            <ul>
-              {amountIngredients.map((index) => {
-                if (drink[`strIngredient${index}`]) {
-                  return (
-                    <li key={drink[`strIngredient${index}`]}>
-                      <span>{drink[`strIngredient${index}`]}</span>
+                                    {drink[`strMeasure${index}`] && (<small>{drink[`strMeasure${index}`]}</small>)}
+                                </li>);
+                            }
+                            return null;
+                        })}
+                    </ul>
+                </DrinkIngredients>
 
-                      {drink[`strMeasure${index}`] && (
-                        <small>{drink[`strMeasure${index}`]}</small>
-                      )}
-                    </li>
-                  );
-                }
-                return null;
-              })}
-            </ul>
-          </DrinkIngredients>
-
-          {drink.strInstructions && (
-            <DrinkInstructions>
-              <p>{drink.strInstructions}</p>
-            </DrinkInstructions>
-          )}
-        </Content>
-      </Container>
-    </Wrapper>
-  );
+                {drink.strInstructions && (<DrinkInstructions>
+                    <p>{drink.strInstructions}</p>
+                </DrinkInstructions>)}
+            </Content>
+        </Container>
+    </Wrapper>);
 }
 
 DrinkDetails.propTypes = {
-  drink: PropTypes.string,
-  hidden: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
+    drink: PropTypes.string, hidden: PropTypes.bool.isRequired, onClose: PropTypes.func.isRequired,
 };
 
 DrinkDetails.defaultProps = {
-  drink: null,
+    drink: null,
 };
 
 export default DrinkDetails;

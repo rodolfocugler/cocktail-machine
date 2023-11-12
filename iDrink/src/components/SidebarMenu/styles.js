@@ -157,6 +157,23 @@ export const CircleIcon = styled.span`
   margin-right: 5px;
   background-color: gray;
 
+  @keyframes fade {
+    from { opacity: 1.0; }
+    50% { opacity: 0.5; }
+    to { opacity: 1.0; }
+  }
+
+  @-webkit-keyframes fade {
+    from { opacity: 1.0; }
+    50% { opacity: 0.5; }
+    to { opacity: 1.0; }
+  }
+
+  &.blink {
+    animation:fade 3000ms infinite;
+    -webkit-animation:fade 3000ms infinite;
+  }
+
   &.online {
     background-color: green;
   }

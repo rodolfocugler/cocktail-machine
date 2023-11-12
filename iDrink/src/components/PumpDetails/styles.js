@@ -241,14 +241,6 @@ export const DrinkIngredients = styled.section`
         border-top: 1px solid #ddd;
       }
 
-      span {
-        cursor: pointer;
-
-        &.disabled {
-          text-decoration: line-through;
-        }
-      }
-
       small {
         color: #999;
         font-size: 12px;

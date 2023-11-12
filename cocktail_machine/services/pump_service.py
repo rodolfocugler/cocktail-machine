@@ -9,9 +9,11 @@ def get():
     cur = conn.cursor()
     cur.execute("""select array_agg(row_to_json(t)) from 
                     (select p.*, m.id as "machineid", m.name as "machinename", m.domain as "machinedomain" from pump p 
-                inner join machine m on m.id = p.machineId ) t;""")
+                inner join machine m on m.id = p.machineId order by p.id) t;""")
     response = cur.fetchall()[0][0]
     conn.close()
+    if response is None:
+        return []
     return [_map(r) for r in response]
 
 

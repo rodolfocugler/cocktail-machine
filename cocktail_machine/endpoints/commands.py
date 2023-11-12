@@ -3,7 +3,7 @@ import logging
 
 import flask
 import requests
-from flask_restx import Namespace, Resource
+from flask_restx import fields, Namespace, Resource
 
 from cocktail_machine import config
 from cocktail_machine.exceptions.cocktail_machine_exception import PumpInUseException, BadRequestException
@@ -15,6 +15,10 @@ api = Namespace('commands')
 conf = config.Config()
 
 pump_commands = PumpCommands.instance()
+
+model = api.model('Command', {
+    'disabledIngredients': fields.List(fields.Integer),
+})
 
 
 def execute_pump(pump, **kwargs):
@@ -64,6 +68,7 @@ class PortCommands(Resource):
 @api.route('/commands/receipt/id/<string:_id>')
 @api.route('/commands/receipt/name/<string:name>')
 class RecipeCommands(Resource):
+    @api.expect(model, validate=True)
     def post(self, _id=None, name=None):
         logging.debug(f'command recipe id={_id}, name={name}')
         if name is not None:
@@ -81,7 +86,7 @@ class RecipeCommands(Resource):
             flask.abort(404, 'Recipe not found')
 
         try:
-            pump_commands.execute_recipe(response['drinks'][0])
+            pump_commands.execute_recipe(response['drinks'][0], set(api.payload["disabledIngredients"]))
         except requests.exceptions.RequestException as e:
             logging.error(e)
             flask.abort(400, "Error while calling the machine")
@@ -90,7 +95,7 @@ class RecipeCommands(Resource):
             flask.abort(400, "Pump in use")
         except BadRequestException as e:
             logging.error(e)
-            flask.abort(400, message=e.message, status=e.status)
+            flask.abort(400, {'message': e.message, 'status': e.status})
         except Exception as e:
             logging.error(e)
             flask.abort(400, f"Error {e}")

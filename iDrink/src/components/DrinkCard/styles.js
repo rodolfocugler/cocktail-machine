@@ -28,6 +28,7 @@ export const Container = styled.div`
 
 export const FavDiv = styled.div`
   width: 220px;
+  color: white;
 
   & :first-child {
     cursor: pointer;
@@ -35,14 +36,19 @@ export const FavDiv = styled.div`
     height: 25px;
 
     & :hover {
-      color: yellow;
+      color: #005c9e;
       width: 30px;
       height: 30px;
     }
   }
 
   & .fav {
-    color: yellow;
+    color: #005c9e;
+    & :hover {
+      color: white;
+      width: 30px;
+      height: 30px;
+    }
   }
 `;
 
@@ -81,8 +87,4 @@ export const DetailsButton = styled.button.attrs({
   &:hover {
     background: ${colors.secondaryColor};
   }
-`;
-
-export const FavIcon = styled.span`
-  background-color: yellow;
 `;

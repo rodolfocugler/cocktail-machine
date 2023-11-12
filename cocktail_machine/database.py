@@ -18,6 +18,7 @@ def crete_tables():
             DROP TABLE IF EXISTS history;
             DROP TABLE IF EXISTS pump;
             DROP TABLE IF EXISTS machine;
+            DROP TABLE IF EXISTS favorite;
         """)
 
     cur.execute(f"""
@@ -55,6 +56,13 @@ def crete_tables():
         machineName VARCHAR (255) NOT NULL,
         domain VARCHAR (255) NOT NULL
     );
+    
+    CREATE TABLE IF NOT EXISTS favorite
+    (
+        id INT PRIMARY KEY NOT NULL GENERATED ALWAYS AS IDENTITY,
+        recipeId int,
+        UNIQUE (recipeId)
+    );
     """)
     conn.commit()
     conn.close()
@@ -73,15 +81,17 @@ def init():
 
         pumps = [
             {'name': 'Tequila', 'port': 0, 'flowRateInMlPerSec': 25, 'machineId': machine['_id'], 'ingredientId': 4},
-            {'name': 'Gin', 'port': 1, 'flowRateInMlPerSec': 50, 'machineId': machine['_id'], 'ingredientId': 2}
+            {'name': 'Gin', 'port': 1, 'flowRateInMlPerSec': 50, 'machineId': machine['_id'], 'ingredientId': 2},
+            {'name': 'Vodka', 'port': 2, 'flowRateInMlPerSec': 25, 'machineId': machine['_id'], 'ingredientId': 1},
+            {'name': 'Rum', 'port': 3, 'flowRateInMlPerSec': 50, 'machineId': machine['_id'], 'ingredientId': 3},
+            {'name': 'Water', 'port': 4, 'flowRateInMlPerSec': 50, 'machineId': machine['_id'], 'ingredientId': 513},
+            {'name': 'Whiskey', 'port': 5, 'flowRateInMlPerSec': 50, 'machineId': machine['_id'], 'ingredientId': 600},
         ]
-        cur.execute("""INSERT INTO pump (name, port, flowRateInMlPerSec, machineId, ingredientId) VALUES
-                        (%s, %s, %s, %s, %s),
-                        (%s, %s, %s, %s, %s);""",
-                    (pumps[0]['name'], pumps[0]['port'], pumps[0]['flowRateInMlPerSec'], pumps[0]['machineId'],
-                     pumps[0]['ingredientId'],
-                     pumps[1]['name'], pumps[1]['port'], pumps[1]['flowRateInMlPerSec'], pumps[1]['machineId'],
-                     pumps[1]['ingredientId']))
+        for pump in pumps:
+            cur.execute("""INSERT INTO pump (name, port, flowRateInMlPerSec, machineId, ingredientId) VALUES
+                            (%s, %s, %s, %s, %s);""",
+                        (pump['name'], pump['port'], pump['flowRateInMlPerSec'], pump['machineId'],
+                         pump['ingredientId']))
 
         conn.commit()
         conn.close()

@@ -1,4 +1,4 @@
-FROM docker-public.docker.devstack.vwgroup.com/python:3.9
+FROM python:3.9
 
 ENV FLASK_PORT 80
 

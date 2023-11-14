@@ -1,4 +1,4 @@
-FROM node:18-alpine AS base
+FROM node:21-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -8,7 +8,7 @@ WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
-RUN  npm ci
+RUN npm clean install
 
 
 
@@ -24,7 +24,7 @@ COPY . .
 # ENV NEXT_TELEMETRY_DISABLED 1
 ENV NODE_OPTIONS --openssl-legacy-provider
 
-RUN yarn build
+RUN npm run build
 
 # If using npm comment out above and use below instead
 # RUN npm run build

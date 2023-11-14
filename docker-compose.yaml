@@ -27,8 +27,8 @@ services:
     depends_on:
       - db
 
-  nginx:
-    image: nginx
+  pages:
+    image: cocktail-machine-pages
     container_name: cocktail-machine-pages
     restart: always
     ports:

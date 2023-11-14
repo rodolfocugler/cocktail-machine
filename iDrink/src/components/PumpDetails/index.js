@@ -1,135 +1,111 @@
 import React, {useState, useEffect} from 'react';
 import PropTypes from 'prop-types';
 import {MdClose} from 'react-icons/md';
-import api from '../../services/api';
-
-import alcoholic from '../../assets/alcoholic.svg';
-import glass from '../../assets/glass.svg';
-
 import colors from '../../utils/colors';
 import {
-  Wrapper,
-  Overlay,
-  Container,
-  CloseButton,
-  DrinkImage,
-  DrinkName,
-  DrinkTags,
-  DrinkInformations,
-  Content,
-  DrinkIngredients,
-  DrinkInstructions,
+    Wrapper,
+    Overlay,
+    Container,
+    CloseButton,
+    DrinkImage,
+    DrinkName,
+    DrinkTags,
+    DrinkInformations,
+    Content,
 } from './styles';
 import {OrderButton} from "./styles";
 import cocktailMachineApi from "../../services/cocktail-machine-api";
-
-const amountIngredients = [
-  0,
-  1,
-  2,
-  3,
-  4,
-  5,
-  6,
-  7,
-  8,
-  9,
-  10,
-  11,
-  12,
-  13,
-  14,
-  15,
-];
+import {toast} from "react-toastify";
 
 function PumpDetails({pump: pump_id, hidden, onClose}) {
-  const [pump, setPump] = useState({});
-  const [inputValue, setInputValue] = useState(45);
+    const [pump, setPump] = useState({});
+    const [inputValue, setInputValue] = useState(45);
 
-  async function handlePrepare() {
-    const response = await cocktailMachineApi.post(`/commands/id/${pump_id}/ml/${inputValue}`);
-
-  }
-
-  useEffect(() => {
-    async function loadPump() {
-      const response = await cocktailMachineApi.get(`/pumps/${pump_id}`);
-      setPump(response.data);
+    async function handlePrepare() {
+        await cocktailMachineApi.post(`/commands/id/${pump_id}/ml/${inputValue}`)
+            .then(() => toast.success("Drink ready", {position: toast.POSITION.BOTTOM_RIGHT}))
+            .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
     }
 
-    if (pump_id) {
-      loadPump();
-    }
-  }, [pump_id]);
+    useEffect(() => {
+        async function loadPump() {
+            const response = await cocktailMachineApi.get(`/pumps/${pump_id}`);
+            setPump(response.data);
+        }
 
-  return (
-    <Wrapper hidden={hidden}>
-      <Overlay hidden={hidden} onClick={onClose}/>
+        if (pump_id) {
+            loadPump();
+        }
+    }, [pump_id]);
 
-      <Container hidden={hidden}>
-        <CloseButton onClick={onClose}>
-          <MdClose color={colors.primaryColor} size={48}/>
-        </CloseButton>
+    return (
+        <Wrapper hidden={hidden}>
+            <Overlay hidden={hidden} onClick={onClose}/>
 
-        <DrinkImage>
-          <img src={`https://www.thecocktaildb.com/images/ingredients/${pump.name}.png`} alt="Thumbnail"/>
-        </DrinkImage>
+            <Container hidden={hidden}>
+                <CloseButton onClick={onClose}>
+                    <MdClose color={colors.primaryColor} size={48}/>
+                </CloseButton>
 
-        <DrinkName>{pump.name}</DrinkName>
+                <DrinkImage>
+                    <img src={`https://www.thecocktaildb.com/images/ingredients/${pump.name}.png`} alt="Thumbnail"/>
+                </DrinkImage>
 
-        <OrderButton onClick={handlePrepare}>Prepare</OrderButton>
+                <DrinkName>{pump.name}</DrinkName>
 
-        <DrinkTags>
+                <OrderButton onClick={handlePrepare}>Prepare</OrderButton>
 
-        </DrinkTags>
+                <DrinkTags>
 
-        <DrinkInformations>
-          <div>
-            <i></i>
-            {!!pump.machine && `${pump.machine.name} (${pump.machine.domain})`}
-          </div>
-        </DrinkInformations>
+                </DrinkTags>
 
-        <DrinkInformations>
-          <div>
-            <i></i>
-            Port {pump.port}
-          </div>
+                <DrinkInformations>
+                    <div>
+                        <i></i>
+                        {!!pump.machine && `${pump.machine.name} (${pump.machine.domain})`}
+                    </div>
+                </DrinkInformations>
 
-          <div>
-            <i></i>
-            {pump.flowRateInMlPerSec} ml per second
-          </div>
-        </DrinkInformations>
+                <DrinkInformations>
+                    <div>
+                        <i></i>
+                        Port {pump.port}
+                    </div>
 
-        <Content>
-          <span>quantity in ml</span>
-          <input
-            type="number"
-            min={0}
-            max={500}
-            step={1}
-            name="quantity"
-            placeholder="45"
-            value={inputValue}
-            onChange={(e) => {
-              setInputValue(e.target.value);
-            }}
-          />
-        </Content>
-      </Container>
-    </Wrapper>
-  );
+                    <div>
+                        <i></i>
+                        {pump.flowRateInMlPerSec} ml per second
+                    </div>
+                </DrinkInformations>
+
+                <Content>
+                    <span>quantity in ml</span>
+                    <input
+                        type="number"
+                        min={0}
+                        max={500}
+                        step={1}
+                        name="quantity"
+                        placeholder="45"
+                        value={inputValue}
+                        onChange={(e) => {
+                            setInputValue(e.target.value);
+                        }}
+                    />
+                </Content>
+            </Container>
+        </Wrapper>
+    );
 }
 
 PumpDetails.propTypes = {
-  pump: PropTypes.string,
-  hidden: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
+    pump: PropTypes.string,
+    hidden: PropTypes.bool.isRequired,
+    onClose: PropTypes.func.isRequired,
 };
 
 PumpDetails.defaultProps = {
-  pump: null,
+    pump: null,
 };
 
 export default PumpDetails;

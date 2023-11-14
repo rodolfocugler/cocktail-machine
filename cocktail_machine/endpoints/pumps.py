@@ -22,12 +22,10 @@ model = api.model('Pump', {
 @api.route('/pumps')
 class PumpList(Resource):
 
-    @api.doc('/', security='auth')
     def get(self):
         logging.debug(f'get pumps')
         return pump_service.get()
 
-    @api.doc('/', security='auth')
     @api.expect(model)
     def post(self):
         logging.debug(f'creating a pump {api.payload}')
@@ -37,18 +35,15 @@ class PumpList(Resource):
 @api.route('/pumps/<int:_id>')
 class Pumps(Resource):
 
-    @api.doc('/<int:_id>', security='auth')
     def get(self, _id):
         logging.debug(f'get pump {_id}')
         return pump_service.get_by_id(_id)
 
-    @api.doc('/<int:_id>', security='auth')
     @api.expect(model)
     def put(self, _id):
         logging.debug(f'put pump {_id}')
         return pump_service.put(_id, api.payload)
 
-    @api.doc('/<int:_id>', security='auth')
     def delete(self, _id):
         logging.debug(f'delete pump {_id}')
         pump_service.delete(_id)

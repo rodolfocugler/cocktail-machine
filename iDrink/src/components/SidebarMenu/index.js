@@ -16,7 +16,7 @@ import {
 } from './styles';
 import cocktailMachineApi from "../../services/cocktail-machine-api";
 import useWebSocket from "react-use-websocket";
-import {useHistory, useLocation, useParams} from "react-router-dom";
+import {useHistory, useLocation} from "react-router-dom";
 import * as queryString from "querystring";
 
 function SidebarMenu({onSelect, selected}) {
@@ -30,7 +30,7 @@ function SidebarMenu({onSelect, selected}) {
     const [socketUrl] = useState('ws://localhost:5001/echo');
     const history = useHistory();
     const {lastMessage} = useWebSocket(socketUrl);
-    const { search } = useLocation();
+    const {search} = useLocation();
 
     useEffect(() => {
         if (lastMessage !== null) {
@@ -46,7 +46,12 @@ function SidebarMenu({onSelect, selected}) {
                 },
             });
 
-            response.data.drinks = [{"strCategory": "Favorities"}].concat(response.data.drinks);
+            response.data.drinks = response.data.drinks.sort(function (a, b) {
+                if (a.strCategory < b.strCategory) return -1;
+                return 1;
+            });
+
+            response.data.drinks = [{"strCategory": "Favorites"}, {"strCategory": "Custom Recipes"}].concat(response.data.drinks);
             response.data.drinks.push({"strCategory": "Random Cocktail"});
             response.data.drinks.push({"strCategory": "Bottles"});
 
@@ -167,6 +172,15 @@ function SidebarMenu({onSelect, selected}) {
                                 <GoTriangleRight color={colors.primaryColor} size={20}/>
                             )}
                             settings
+                        </CategoryListItem>
+
+                        <CategoryListItem
+                            selected={selectedCategory === "Recipes"}
+                            onClick={() => history.push("/recipe/0")}>
+                            {selectedCategory === "Recipes" && (
+                                <GoTriangleRight color={colors.primaryColor} size={20}/>
+                            )}
+                            recipes
                         </CategoryListItem>
 
                         <CategoryListItem

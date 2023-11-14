@@ -22,27 +22,36 @@ import {
 } from './styles';
 import {OrderButton} from "./styles";
 import cocktailMachineApi from "../../services/cocktail-machine-api";
-import index from "styled-components/macro";
+import {toast} from "react-toastify";
 
 const amountIngredients = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,];
 
-function DrinkDetails({drink: drink_id, hidden, onClose, pumps}) {
+function DrinkDetails({drink: drink_id, type, hidden, onClose, pumps}) {
     const [drink, setDrink] = useState({});
     const [prepareEnabled, setPrepareEnabled] = useState(false);
     const [disabledIngredients, setDisabledIngredients] = useState(new Set());
 
     async function handlePrepare() {
-        const response = await cocktailMachineApi.post(`/commands/receipt/id/${drink_id}`,
-            JSON.stringify({disabledIngredients: Array.from(disabledIngredients)}));
+        await cocktailMachineApi.post(`/commands/recipe/id/${drink_id}/type/${type}`,
+            JSON.stringify({disabledIngredients: Array.from(disabledIngredients)}))
+            .then(() => toast.success("Drink ready", {position: toast.POSITION.BOTTOM_RIGHT}))
+            .catch((e) => {
+                if (e.response.status === 400) {
+                    toast.error(e.response.data.message.message, {position: toast.POSITION.BOTTOM_RIGHT});
+                } else {
+                    toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT});
+                }
+            });
     }
 
     useEffect(() => {
         async function loadDrink() {
-            const response = await api.get('lookup.php', {
-                params: {
-                    i: drink_id,
-                },
-            });
+            let response;
+            if (type === 1) {
+                response = await api.get('lookup.php', {params: {i: drink_id}});
+            } else {
+                response = await cocktailMachineApi.get(`recipes/${drink_id}`);
+            }
 
             setDrink(response.data.drinks[0]);
             let pumpNames = pumps.map((p) => p.name.toLowerCase());
@@ -72,7 +81,9 @@ function DrinkDetails({drink: drink_id, hidden, onClose, pumps}) {
                 <img src={drink.strDrinkThumb} alt="Thumbnail"/>
             </DrinkImage>
 
-            <DrinkName>{drink.strDrink}</DrinkName>
+            <DrinkName>
+                {drink.strDrink}
+            </DrinkName>
 
             {prepareEnabled && <OrderButton onClick={handlePrepare}>Prepare</OrderButton>}
             {!prepareEnabled && <OrderButton className={"disabled"}>Drink not possible</OrderButton>}

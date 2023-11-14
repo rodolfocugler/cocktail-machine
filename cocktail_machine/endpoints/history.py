@@ -12,7 +12,6 @@ conf = config.Config()
 @api.route('/histories')
 class HistoryList(Resource):
 
-    @api.doc('/', security='auth')
     def get(self):
         logging.debug(f'get histories')
         conn = database.get_connection()

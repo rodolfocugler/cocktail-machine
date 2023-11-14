@@ -96,7 +96,7 @@ class PumpCommands:
         _run_request(machine_request)
         sem.release()
 
-    def execute_recipe(self, recipe, disabledIngredients):
+    def execute_recipe(self, recipe, disabled_ingredients):
         if _is_locked():
             raise PumpInUseException()
 
@@ -108,7 +108,7 @@ class PumpCommands:
             [ingredients.update({p['name'].lower(): p}) for p in pumps]
             keys = {}
             [keys.update({i: ingredients[recipe[f'strIngredient{i}'].lower()]}) for i in range(1, 15)
-             if i not in disabledIngredients and recipe[f'strIngredient{i}'] is not None and recipe[
+             if i not in disabled_ingredients and recipe[f'strIngredient{i}'] is not None and recipe[
                  f'strIngredient{i}'].lower() in ingredients]
 
             if len(keys.items()) == 0:
@@ -116,8 +116,27 @@ class PumpCommands:
 
             pump_requests = []
             for i, pump in keys.items():
-                exp = recipe[f'strMeasure{i}'].strip().replace(' oz', '').replace(' ', '+')
-                result = eval(exp) * 29.5735
+                if recipe[f'strMeasure{i}'] is None or recipe[f'strMeasure{i}'] == "":
+                    raise BadRequestException('Measure is not present', 1004)
+
+                exp = recipe[f'strMeasure{i}'].strip()
+                if 'oz' in exp:
+                    exp = exp.replace('oz', '').strip().replace(' ', '+')
+                    result = eval(exp) * 29.5735
+                elif 'shot' in exp:
+                    exp = exp.replace('shot', '').strip().replace(' ', '+')
+                    result = eval(exp) * 45
+                elif 'part' in exp:
+                    exp = exp.replace('part', '').strip().replace(' ', '+')
+                    result = eval(exp) * 45
+                elif 'cl' in exp:
+                    exp = exp.replace('cl', '').strip().replace(' ', '+')
+                    result = eval(exp) * 10
+                elif 'ml' in exp:
+                    result = float(exp)
+                else:
+                    raise BadRequestException('Fail! Check code! Unit not known', 1003)
+
                 pump_requests.append(PumpRequest(pump, ml=result))
 
             machine_request = MachineRequest(pump_requests)

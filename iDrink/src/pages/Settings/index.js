@@ -1,12 +1,12 @@
 import React, {useEffect, useState} from 'react';
 import SidebarMenu from "../../components/SidebarMenu";
-import {Container, Drinks, RandomButton, Wrapper} from "../Home/styles";
+import {Container, Wrapper} from "../Home/styles";
 import {useHistory} from "react-router-dom";
 import cocktailMachineApi from "../../services/cocktail-machine-api";
 import {AiOutlineReload} from "react-icons/ai";
 import colors from "../../utils/colors";
-import DrinkCard from "../../components/DrinkCard";
 import {Button, Table} from "./styles";
+import {toast} from "react-toastify";
 
 function Settings() {
     const history = useHistory();
@@ -27,9 +27,13 @@ function Settings() {
             const p = {...pumps[index]};
             p.machineId = p.machine.id;
             delete p.machine
-            await cocktailMachineApi.put(`/pumps/${p.id}`, JSON.stringify(p));
+            await cocktailMachineApi.put(`/pumps/${p.id}`, JSON.stringify(p))
+                .then(() => toast.success("Saved", {position: toast.POSITION.BOTTOM_RIGHT}))
+                .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
         } else {
-            await cocktailMachineApi.post(`/pumps`, JSON.stringify(pump));
+            await cocktailMachineApi.post(`/pumps`, JSON.stringify(pump))
+                .then(() => toast.success("Saved", {position: toast.POSITION.BOTTOM_RIGHT}))
+                .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
             await loadPumps();
             setPump({
                 "name": "",
@@ -42,25 +46,34 @@ function Settings() {
     }
 
     async function onTrigger(index) {
-        await cocktailMachineApi.post(`/commands/id/${pumps[index].id}/seconds/10`);
-
+        await cocktailMachineApi.post(`/commands/id/${pumps[index].id}/seconds/10`)
+            .then(() => toast.success("Triggered", {position: toast.POSITION.BOTTOM_RIGHT}))
+            .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
     }
 
     async function onPumpDelete(index) {
-        const response = await cocktailMachineApi.delete(`/pumps/${pumps[index].id}`);
+        await cocktailMachineApi.delete(`/pumps/${pumps[index].id}`)
+            .then(() => toast.success("Deleted", {position: toast.POSITION.BOTTOM_RIGHT}))
+            .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
         setPumps([...pumps.slice(0, index).concat(pumps.slice(index + 1, pumps.length))]);
     }
 
     async function onMachineDelete(index) {
-        const response = await cocktailMachineApi.delete(`/machines/${machines[index].id}`);
+        await cocktailMachineApi.delete(`/machines/${machines[index].id}`)
+            .then(() => toast.success("Deleted", {position: toast.POSITION.BOTTOM_RIGHT}))
+            .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
         setMachines([...machines.slice(0, index).concat(machines.slice(index + 1, machines.length))]);
     }
 
     const onMachineSave = async (index) => {
         if (index > -1) {
-            const machineResponse = await cocktailMachineApi.put(`/machines/${machines[index].id}`, JSON.stringify(machines[index]));
+            await cocktailMachineApi.put(`/machines/${machines[index].id}`, JSON.stringify(machines[index]))
+                .then(() => toast.success("Saved", {position: toast.POSITION.BOTTOM_RIGHT}))
+                .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
         } else {
-            await cocktailMachineApi.post(`/machines`, JSON.stringify(machine));
+            await cocktailMachineApi.post(`/machines`, JSON.stringify(machine))
+                .then(() => toast.success("Saved", {position: toast.POSITION.BOTTOM_RIGHT}))
+                .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
             setMachine({"name": "", "domain": ""});
             await loadMachines();
         }
@@ -338,6 +351,10 @@ function Settings() {
                             </tr>
                             </tbody>
                         </Table>
+                        <hr className="solid"/>
+                        <div style={{marginTop: "20px"}}>
+                            <Button onClick={() => history.push("/recipe/0")}>new recipe</Button>
+                        </div>
                     </>)}
                 </Container>
             </Wrapper>

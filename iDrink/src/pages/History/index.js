@@ -6,7 +6,6 @@ import HistoryCard from "../../components/HistoryCard";
 import cocktailMachineApi from "../../services/cocktail-machine-api";
 import {AiOutlineReload} from "react-icons/ai";
 import colors from "../../utils/colors";
-import DrinkCard from "../../components/DrinkCard";
 
 function History() {
     const history = useHistory();

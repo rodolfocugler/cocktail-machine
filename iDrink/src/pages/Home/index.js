@@ -23,45 +23,51 @@ function Home() {
     const [pumpDetails, setPumpDetails] = useState(null);
     const [favorites, setFavorites] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [drinkType, setDrinkType] = useState(1);
 
-    useEffect(() => {
-        async function loadDrinks() {
-            let response;
-            var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?strCategory=${category}`;
-            window.history.pushState({path: newurl}, '', newurl);
+    async function loadDrinks() {
+        let response;
+        var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?strCategory=${category}`;
+        window.history.pushState({path: newurl}, '', newurl);
 
-            if (category === 'Random Cocktail') {
-                response = await api.get('random.php');
-            } else if (category === 'Favorities') {
-                response = await cocktailMachineApi.get('/favorites/drinks');
-            } else if (category === 'Bottles') {
-                const pumpsDrinks = pumps.map(p => {
-                    return {
-                        strDrink: `${p.name}`,
-                        strDrinkThumb: `https://www.thecocktaildb.com/images/ingredients/${p.name}.png`,
-                        isPump: true,
-                        idDrink: p.id
-                    }
-                });
+        let auxDrinkType = 1;
+        if (category === 'Random Cocktail') {
+            response = await api.get('random.php');
+        } else if (category === 'Favorites') {
+            response = await cocktailMachineApi.get('/favorites/drinks');
+        } else if (category === "Custom Recipes") {
+            response = await cocktailMachineApi.get('/recipes');
+            auxDrinkType = 2;
+        } else if (category === 'Bottles') {
+            const pumpsDrinks = pumps.map(p => {
+                return {
+                    strDrink: `${p.name}`,
+                    strDrinkThumb: `https://www.thecocktaildb.com/images/ingredients/${p.name}.png`,
+                    isPump: true,
+                    idDrink: p.id
+                }
+            });
 
-                response = {
-                    data: {
-                        drinks: pumpsDrinks,
-                    }
-                };
-            } else {
-                response = await api.get('/filter.php', {
-                    params: {
-                        c: category.replace(' ', '_'),
-                    },
-                });
-            }
-
-            setDrinks(response.data.drinks);
-            setFilteredDrinks(response.data.drinks);
-            setLoading(false);
+            response = {
+                data: {
+                    drinks: pumpsDrinks,
+                }
+            };
+        } else {
+            response = await api.get('/filter.php', {
+                params: {
+                    c: category.replace(' ', '_'),
+                },
+            });
         }
 
+        setDrinkType(auxDrinkType);
+        setDrinks(response.data.drinks);
+        setFilteredDrinks(response.data.drinks);
+        setLoading(false);
+    }
+
+    useEffect(() => {
         if (category) {
             setLoading(true);
             setFilterValue('');
@@ -130,6 +136,7 @@ function Home() {
         <DrinkDetails
             drink={drinkDetails}
             hidden={drinkDetails === null}
+            type={category === "Favorite" ? drinkDetails.type : drinkType}
             pumps={pumps}
             onClose={() => {
                 setDrinkDetails(null);
@@ -184,15 +191,19 @@ function Home() {
 
                     <ul>
                         {filteredDrinks.map((drink) => (<DrinkCard
+                            onUpdateList={loadDrinks}
                             onFavoriteClick={loadFavorites}
+                            type={category === "Favorites" ? drink.type : drinkType}
                             isFavorite={favorites.indexOf(parseInt(drink.idDrink)) > -1}
                             key={String(drink.idDrink)}
                             drink={drink}
                             onDetails={() => {
-                                if ((drink.isPump !== undefined && !drink.isPump) || drink.isPump !== undefined)
+                                if (category === "Favorites") setDrinkType(drink.type);
+                                if ((drink.isPump !== undefined && !drink.isPump) || drink.isPump !== undefined) {
                                     setPumpDetails(drink.idDrink);
-                                else
+                                } else {
                                     setDrinkDetails(drink.idDrink);
+                                }
                             }}
                         />))}
                     </ul>

@@ -7,7 +7,7 @@ from flask_restx import fields, Namespace, Resource
 
 from cocktail_machine import config
 from cocktail_machine.exceptions.cocktail_machine_exception import PumpInUseException, BadRequestException
-from cocktail_machine.services import pump_service
+from cocktail_machine.services import pump_service, recipe_service
 from cocktail_machine.services.pump_commands import PumpCommands
 
 api = Namespace('commands')
@@ -65,22 +65,24 @@ class PortCommands(Resource):
         execute_pump(pump=pump, ml=ml, seconds=seconds)
 
 
-@api.route('/commands/receipt/id/<string:_id>')
-@api.route('/commands/receipt/name/<string:name>')
+@api.route('/commands/recipe/id/<string:_id>/type/<int:_type>')
+@api.route('/commands/recipe/name/<string:name>/type/<int:_type>')
 class RecipeCommands(Resource):
     @api.expect(model, validate=True)
-    def post(self, _id=None, name=None):
-        logging.debug(f'command recipe id={_id}, name={name}')
-        if name is not None:
-            url = f"https://www.thecocktaildb.com/api/json/v1/1/search.php?s={name}"
+    def post(self, _id=None, name=None, _type=0):
+        logging.debug(f'command recipe id={_id}, name={name}, _type={_type}')
+
+        if _type == 1:
+            url = "https://www.thecocktaildb.com/api/json/v1/1"
+            url += f'/search.php?s={name}' if name is not None else f'/lookup.php?i={_id}'
+            r = requests.get(url)
+            if r.status_code != 200:
+                flask.abort(r.status_code, r.text)
+            response = json.loads(r.text)
+
         else:
-            url = f"https://www.thecocktaildb.com/api/json/v1/1/lookup.php?i={_id}"
+            response = recipe_service.get_by_id(_id)
 
-        r = requests.get(url)
-        if r.status_code != 200:
-            flask.abort(r.status_code, r.text)
-
-        response = json.loads(r.text)
         logging.debug(response)
         if response['drinks'] is None:
             flask.abort(404, 'Recipe not found')

@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const cocktailMachineApi = axios.create({
-    baseURL: 'http://localhost:5001/api',
+    baseURL: 'http://rasp-pi:5000/api',
     headers: {'Content-Type': 'application/json'}
 });
 

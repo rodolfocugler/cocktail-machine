@@ -124,10 +124,10 @@ class PumpCommands:
                     exp = exp.replace('oz', '').strip().replace(' ', '+')
                     result = eval(exp) * 29.5735
                 elif 'shot' in exp:
-                    exp = exp.replace('shot', '').strip().replace(' ', '+')
+                    exp = exp.replace('shot', '').replace('shots', '').strip().replace(' ', '+')
                     result = eval(exp) * 45
                 elif 'part' in exp:
-                    exp = exp.replace('part', '').strip().replace(' ', '+')
+                    exp = exp.replace('part', '').replace('parts', '').strip().replace(' ', '+')
                     result = eval(exp) * 45
                 elif 'cl' in exp:
                     exp = exp.replace('cl', '').strip().replace(' ', '+')

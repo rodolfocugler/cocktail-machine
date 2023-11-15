@@ -1,4 +1,4 @@
-FROM docker-public.docker.devstack.vwgroup.com/node:21-alpine AS base
+FROM node:21-alpine AS base
 
 FROM base AS deps
 RUN apk add --no-cache libc6-compat
@@ -16,7 +16,7 @@ ENV NODE_OPTIONS --openssl-legacy-provider
 
 RUN npm run build
 
-FROM docker-public.docker.devstack.vwgroup.com/nginx
+FROM nginx
 
 COPY ./nginx.conf /etc/nginx/nginx.conf
 COPY --from=builder /app/build /www/data

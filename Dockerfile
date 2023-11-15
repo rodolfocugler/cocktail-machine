@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./ .
 
-ENTRYPOINT waitress-serve --port=$FLASK_PORT --call cocktail_machine:create_app
+ENTRYPOINT gunicorn --port=$FLASK_PORT --workers=2 cocktail_machine:create_app

@@ -29,7 +29,7 @@ def echo(ws):
                     r = requests.post(f'{machines[0]["domain"]}/api/health')
                     if r.status_code != 200 and state != 'offline':
                         state = _notify(ws, 'offline')
-                    elif state != 'online':
+                    elif r.status_code == 200 and state != 'online':
                         state = _notify(ws, 'online')
             except:
                 if state != 'offline':

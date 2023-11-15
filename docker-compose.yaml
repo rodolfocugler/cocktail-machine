@@ -18,6 +18,7 @@ services:
     restart: always
     ports:
       - "5000:80"
+    entrypoint: gunicorn -b=:5000 --workers=20 --threads=50 'cocktail_machine:create_app()'
     environment:
       BASIC_AUTH_FORCE: "False"
       DATABASE_URL: "postgresql://admin:123456@db/db1"
@@ -31,7 +32,6 @@ services:
     image: cocktail-machine-pages
     container_name: cocktail-machine-pages
     restart: always
-    entrypoint: gunicorn -b=:5000 --workers=2 'cocktail_machine:create_app()'
     ports:
       - "80:80"
     depends_on:

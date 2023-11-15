@@ -75,7 +75,7 @@ class Favorites(Resource):
         return {"drinks": drinks}
 
 
-@api.route('/favorites/drinks/<int:recipeId>/type/<int:type>')
+@api.route('/favorites/drinks/<int:recipeId>/type/<int:_type>')
 class Favorites(Resource):
 
     def delete(self, recipeId, _type):

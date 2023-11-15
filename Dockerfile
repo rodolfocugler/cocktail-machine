@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./ .
 
-ENTRYPOINT gunicorn -b=:5000 --workers=2 cocktail_machine:create_app
+ENTRYPOINT gunicorn -b=:5000 --workers=2 'cocktail_machine:create_app()'

@@ -11,4 +11,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ./ .
 
-ENTRYPOINT gunicorn --port=$FLASK_PORT --workers=2 cocktail_machine:create_app
+ENTRYPOINT gunicorn -b=$FLASK_PORT --port=$FLASK_PORT --workers=2 cocktail_machine:create_app

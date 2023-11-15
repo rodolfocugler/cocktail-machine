@@ -44,10 +44,11 @@ function Recipe() {
         let response = {};
         if (type === 1) {
             response = await api.get('lookup.php', {params: {i: drinkId}});
+            response = response.data.drinks[0];
         } else if (parseInt(params.id) !== 0) {
             response = await cocktailMachineApi.get(`/recipes/${drinkId}`);
+            response = response.data.drinks[0];
         }
-        response = response.data.drinks[0];
         setDrink(response);
         setLoading(false);
     }

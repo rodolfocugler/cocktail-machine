@@ -29,11 +29,17 @@ function SidebarMenu({onSelect, selected}) {
   const [machineStatus, setMachineStatus] = useState("");
   const [socketUrl] = useState(`ws://${cocktailMachineDomain()}/echo`);
   const history = useHistory();
-  const {lastMessage} = useWebSocket(socketUrl);
+  const {lastMessage} = useWebSocket(socketUrl, {
+    onError: (event) => console.log(event),
+    onOpen: (event) => console.log(event),
+    shouldReconnect: true,
+    retryOnError: true,
+  });
   const {search} = useLocation();
 
   useEffect(() => {
     if (lastMessage !== null) {
+      console.log(`message received: ${lastMessage.data}`)
       setMachineStatus(lastMessage.data);
     }
   }, [lastMessage]);

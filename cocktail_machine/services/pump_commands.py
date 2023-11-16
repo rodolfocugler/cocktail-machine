@@ -26,7 +26,7 @@ def echo(ws):
                 if len(machines) == 0:
                     state = _notify(ws, '')
                 else:
-                    r = requests.post(f'{machines[0]["domain"]}/api/health')
+                    r = requests.post(f'{machines[0]["domain"]}/api/health', timeout=1)
                     if r.status_code != 200 and state != 'offline':
                         state = _notify(ws, 'offline')
                     elif r.status_code == 200 and state != 'online':

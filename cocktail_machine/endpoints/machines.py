@@ -52,5 +52,5 @@ class MachinesHealth(Resource):
 
     def get(self, _id):
         machine = Machines().get(_id)
-        r = requests.post(f'{machine["domain"]}/api/health')
+        r = requests.post(f'{machine["domain"]}/api/health', timeout=1)
         return r.text, r.status_code

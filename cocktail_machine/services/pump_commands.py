@@ -119,7 +119,7 @@ class PumpCommands:
                 if recipe[f'strMeasure{i}'] is None or recipe[f'strMeasure{i}'] == "":
                     raise BadRequestException('Measure is not present', 1004)
 
-                exp = recipe[f'strMeasure{i}'].strip()
+                exp = recipe[f'strMeasure{i}'].strip().lower()
                 if 'oz' in exp:
                     exp = exp.replace('oz', '').strip().replace(' ', '+')
                     result = eval(exp) * 29.5735
@@ -134,6 +134,11 @@ class PumpCommands:
                     result = eval(exp) * 10
                 elif 'ml' in exp:
                     result = float(exp)
+                elif 'cup' in exp or 'top up with' in exp or 'fill to top' in exp:
+                    exp = exp.replace('top up with', '').replace('fill to top', '').strip().replace(' ', '+')
+                    if exp == '':
+                        exp = '1'
+                    result = float(exp) * 100
                 else:
                     raise BadRequestException('Fail! Check code! Unit not known', 1003)
 

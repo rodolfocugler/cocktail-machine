@@ -72,6 +72,7 @@ void loop() {
     isFirstIteration = false;
     Serial.println("First iteration");
     digitalWrite(0, HIGH);
+    digitalWrite(16, HIGH);
   }
   server.handleClient();
 }

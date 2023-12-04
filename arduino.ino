@@ -30,6 +30,13 @@ int requestPinsCount = 0;
 ESP8266WebServer server(80);
 
 void setup() {
+  for (int i = 0; i <= sizeof(pins); i++) {
+    pinMode(pins[i], OUTPUT);
+  }
+
+  digitalWrite(0, HIGH);
+  digitalWrite(16, HIGH);
+
   Serial.begin(74880);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
@@ -57,23 +64,11 @@ void setup() {
     server.send(200, "application/json", "");
   });
 
-  for (int i = 0; i <= sizeof(pins); i++) {
-    pinMode(pins[i], OUTPUT);
-  }
-
   server.begin();
   Serial.println("HTTP server started");
 }
 
-bool isFirstIteration = true;
-
 void loop() {
-  if (isFirstIteration) {
-    isFirstIteration = false;
-    Serial.println("First iteration");
-    digitalWrite(0, HIGH);
-    digitalWrite(16, HIGH);
-  }
   server.handleClient();
 }
 

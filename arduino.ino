@@ -15,6 +15,8 @@
 
 const char *ssid = STASSID;
 const char *password = STAPSK;
+// 2 is led
+// 0 and 16 are high at boot
 const int pins[] = { 16, 14, 12, 13, 15, 0, 4, 5, 2 };
 
 struct request {
@@ -130,7 +132,7 @@ int executeCommand() {
     Serial.print("Putting pin ");
     Serial.print(requests[i].pin);
 
-    if (requests[i].pin == 0) {
+    if (requests[i].pin == 0 || requests[i].pin == 16) {
       digitalWrite(requests[i].pin, LOW);
       Serial.println(" LOW");
     } else {
@@ -147,7 +149,7 @@ int executeCommand() {
     Serial.print("Putting pin ");
     Serial.print(requests[i].pin);
 
-    if (requests[i].pin == 0) {
+    if (requests[i].pin == 0 || requests[i].pin == 16) {
       digitalWrite(requests[i].pin, HIGH);
       Serial.print(" HIGH after ");
     } else {

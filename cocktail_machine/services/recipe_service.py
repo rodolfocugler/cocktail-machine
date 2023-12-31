@@ -16,6 +16,10 @@ def get():
     return {'drinks': response}
 
 
+def get_payload(payload, names):
+    return [payload[name] if name in payload else None for name in names]
+
+
 def post(payload):
     conn = database.get_connection()
     try:
@@ -33,22 +37,15 @@ def post(payload):
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
                  %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
                 RETURNING \"idDrink\";""",
-            (
-                payload['strDrink'], payload['strTags'], payload['strCategory'], payload['strIBA'],
-                payload['strAlcoholic'],
-                payload['strGlass'], payload['strInstructions'], payload['strDrinkThumb'], payload['strIngredient1'],
-                payload['strIngredient2'], payload['strIngredient3'], payload['strIngredient4'],
-                payload['strIngredient5'],
-                payload['strIngredient6'], payload['strIngredient7'], payload['strIngredient8'],
-                payload['strIngredient9'],
-                payload['strIngredient10'], payload['strIngredient11'], payload['strIngredient12'],
-                payload['strIngredient13'], payload['strIngredient14'], payload['strIngredient15'],
-                payload['strMeasure1'],
-                payload['strMeasure2'], payload['strMeasure3'], payload['strMeasure4'], payload['strMeasure5'],
-                payload['strMeasure6'], payload['strMeasure7'], payload['strMeasure8'], payload['strMeasure9'],
-                payload['strMeasure10'], payload['strMeasure11'], payload['strMeasure12'], payload['strMeasure13'],
-                payload['strMeasure14'], payload['strMeasure15'], payload['strImageSource'],
-                payload['strImageAttribution']))
+            (get_payload(payload,
+                         ['strDrink', 'strTags', 'strCategory', 'strIBA', 'strAlcoholic', 'strGlass', 'strInstructions',
+                          'strDrinkThumb', 'strIngredient1', 'strIngredient2', 'strIngredient3', 'strIngredient4',
+                          'strIngredient5', 'strIngredient6', 'strIngredient7', 'strIngredient8', 'strIngredient9',
+                          'strIngredient10', 'strIngredient11', 'strIngredient12', 'strIngredient13', 'strIngredient14',
+                          'strIngredient15', 'strMeasure1', 'strMeasure2', 'strMeasure3', 'strMeasure4', 'strMeasure5',
+                          'strMeasure6', 'strMeasure7', 'strMeasure8', 'strMeasure9''strMeasure10', 'strMeasure11',
+                          'strMeasure12', 'strMeasure13', 'strMeasure14', 'strMeasure15', 'strImageSource',
+                          'strImageAttribution'])))
         payload['idDrink'] = cur.fetchone()[0]
         conn.commit()
         return payload
@@ -86,21 +83,15 @@ def put(_id, payload):
              \"strMeasure10\" = %s, \"strMeasure11\" = %s, \"strMeasure12\" = %s, \"strMeasure13\" = %s, 
              \"strMeasure14\" = %s, \"strMeasure15\" = %s, \"strImageSource\" = %s, \"strImageAttribution\" = %s
               WHERE \"idDrink\" = %s;""",
-            (payload['strDrink'], payload['strTags'], payload['strCategory'], payload['strIBA'],
-             payload['strAlcoholic'],
-             payload['strGlass'], payload['strInstructions'], payload['strDrinkThumb'], payload['strIngredient1'],
-             payload['strIngredient2'], payload['strIngredient3'], payload['strIngredient4'],
-             payload['strIngredient5'],
-             payload['strIngredient6'], payload['strIngredient7'], payload['strIngredient8'],
-             payload['strIngredient9'],
-             payload['strIngredient10'], payload['strIngredient11'], payload['strIngredient12'],
-             payload['strIngredient13'], payload['strIngredient14'], payload['strIngredient15'],
-             payload['strMeasure1'],
-             payload['strMeasure2'], payload['strMeasure3'], payload['strMeasure4'], payload['strMeasure5'],
-             payload['strMeasure6'], payload['strMeasure7'], payload['strMeasure8'], payload['strMeasure9'],
-             payload['strMeasure10'], payload['strMeasure11'], payload['strMeasure12'], payload['strMeasure13'],
-             payload['strMeasure14'], payload['strMeasure15'], payload['strImageSource'],
-             payload['strImageAttribution'], _id))
+            (get_payload(payload, ['strDrink', 'strTags', 'strCategory', 'strIBA', 'strAlcoholic',
+                                   'strGlass', 'strInstructions', 'strDrinkThumb', 'strIngredient1', 'strIngredient2',
+                                   'strIngredient3', 'strIngredient4', 'strIngredient5', 'strIngredient6',
+                                   'strIngredient7', 'strIngredient8', 'strIngredient9', 'strIngredient10',
+                                   'strIngredient11', 'strIngredient12', 'strIngredient13', 'strIngredient14',
+                                   'strIngredient15', 'strMeasure1', 'strMeasure2', 'strMeasure3', 'strMeasure4',
+                                   'strMeasure5', 'strMeasure6', 'strMeasure7', 'strMeasure8', 'strMeasure9',
+                                   'strMeasure10', 'strMeasure11', 'strMeasure12', 'strMeasure13', 'strMeasure14',
+                                   'strMeasure15', 'strImageSource', 'strImageAttribution']) + [_id]))
         conn.commit()
         conn.close()
         if cur.rowcount == 0:

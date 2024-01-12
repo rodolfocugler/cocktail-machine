@@ -1,14 +1,19 @@
 import axios from 'axios';
+import * as queryString from "querystring";
 
-const cocktailMachine = {}
-const cocktailMachineApi = axios.create({
-  baseURL: `http://${cocktailMachineDomain()}/api`,
+const cocktailMachineApi = (search) => axios.create({
+  baseURL: `http://${cocktailMachineDomain(search)}/api`,
   headers: {'Content-Type': 'application/json'}
 });
 
 
-export function cocktailMachineDomain() {
-  return "rasp-pi:5000";
+export function getDomain(search) {
+  const domain = queryString.parse(search.replace('?', '')).domain
+  return domain ? domain : 'rasp-pi'
+}
+
+export function cocktailMachineDomain(search) {
+  return `${getDomain(search)}:5000`;
 }
 
 export default cocktailMachineApi;

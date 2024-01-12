@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {GoTriangleRight} from 'react-icons/go';
 import {GiHamburgerMenu} from 'react-icons/gi';
@@ -8,41 +8,36 @@ import api from '../../services/api';
 import colors from '../../utils/colors';
 import logo from '../../assets/logo.svg';
 
-import {
-  Container,
-  MobileMenuButton,
-  Content,
-  CategoryListItem, CircleIcon,
-} from './styles';
-import cocktailMachineApi, {cocktailMachineDomain} from "../../services/cocktail-machine-api";
+import {CategoryListItem, CircleIcon, Container, Content, MobileMenuButton,} from './styles';
+import cocktailMachineApi, {cocktailMachineDomain, getDomain} from "../../services/cocktail-machine-api";
 import useWebSocket from "react-use-websocket";
 import {useHistory, useLocation} from "react-router-dom";
 import * as queryString from "querystring";
 
 function SidebarMenu({onSelect, selected}) {
-  const [categories, setCategories] = useState([]);
-  const [filteredCategories, setFilteredCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [filterTimeout, setFilterTimeout] = useState(null);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [machines, setMachines] = useState([]);
-  const [machineStatus, setMachineStatus] = useState("");
-  const [socketUrl] = useState(`ws://${cocktailMachineDomain()}/echo`);
+  const [ categories, setCategories ] = useState([]);
+  const [ filteredCategories, setFilteredCategories ] = useState([]);
+  const [ selectedCategory, setSelectedCategory ] = useState('');
+  const [ filterTimeout, setFilterTimeout ] = useState(null);
+  const [ mobileMenuOpen, setMobileMenuOpen ] = useState(false);
+  const [ machines, setMachines ] = useState([]);
+  const [ machineStatus, setMachineStatus ] = useState("");
+  const {search} = useLocation();
+  const [ socketUrl ] = useState(`ws://${cocktailMachineDomain(search)}/echo`);
   const history = useHistory();
   const {lastMessage} = useWebSocket(socketUrl, {
     onError: (event) => console.log(event),
     onOpen: (event) => console.log(event),
-    shouldReconnect: true,
+    shouldReconnect: false,
     retryOnError: true,
   });
-  const {search} = useLocation();
 
   useEffect(() => {
     if (lastMessage !== null) {
       console.log(`message received: ${lastMessage.data}`)
       setMachineStatus(lastMessage.data);
     }
-  }, [lastMessage]);
+  }, [ lastMessage ]);
 
   useEffect(() => {
     async function loadCategories() {
@@ -57,7 +52,7 @@ function SidebarMenu({onSelect, selected}) {
         return 1;
       });
 
-      response.data.drinks = [{"strCategory": "Favorites"}, {"strCategory": "Custom Recipes"}].concat(response.data.drinks);
+      response.data.drinks = [ {"strCategory": "Favorites"}, {"strCategory": "Custom Recipes"} ].concat(response.data.drinks);
       response.data.drinks.push({"strCategory": "Random Cocktail"});
       response.data.drinks.push({"strCategory": "Bottles"});
 
@@ -73,7 +68,7 @@ function SidebarMenu({onSelect, selected}) {
     }
 
     async function loadMachines() {
-      const response = await cocktailMachineApi.get("/machines");
+      const response = await cocktailMachineApi(search).get("/machines");
       setMachines(response.data);
     }
 
@@ -84,7 +79,7 @@ function SidebarMenu({onSelect, selected}) {
   useEffect(() => {
     async function pingMachine() {
       if (!!machines && machines.length > 0) {
-        const response = await cocktailMachineApi.get(`/machines/${machines[0].id}/health`)
+        const response = await cocktailMachineApi(search).get(`/machines/${machines[0].id}/health`)
           .catch(() => setMachineStatus("offline"));
 
         if (!!response)
@@ -93,12 +88,12 @@ function SidebarMenu({onSelect, selected}) {
     }
 
     pingMachine();
-  }, [machines])
+  }, [ machines ])
 
   useEffect(() => {
     setMobileMenuOpen(false);
     onSelect(selectedCategory);
-  }, [selectedCategory, onSelect]);
+  }, [ selectedCategory, onSelect ]);
 
   function handleFilterCategories(event) {
     const {value} = event.target;
@@ -139,7 +134,7 @@ function SidebarMenu({onSelect, selected}) {
         display: "flex",
         alignItems: "center"
       }}>
-        <CircleIcon className={[machineStatus, "blink"]}></CircleIcon>
+        <CircleIcon className={[ machineStatus, "blink" ]}></CircleIcon>
         Drinkeiro
       </h3>
 
@@ -173,7 +168,7 @@ function SidebarMenu({onSelect, selected}) {
 
             <CategoryListItem
               selected={selectedCategory === "Settings"}
-              onClick={() => history.push("/settings")}>
+              onClick={() => history.push(`/settings?domain=${getDomain(search)}`)}>
               {selectedCategory === "Settings" && (
                 <GoTriangleRight color={colors.primaryColor} size={20}/>
               )}
@@ -182,7 +177,7 @@ function SidebarMenu({onSelect, selected}) {
 
             <CategoryListItem
               selected={selectedCategory === "Recipes"}
-              onClick={() => history.push("/recipe/0")}>
+              onClick={() => history.push(`/recipe/0?domain=${getDomain(search)}`)}>
               {selectedCategory === "Recipes" && (
                 <GoTriangleRight color={colors.primaryColor} size={20}/>
               )}
@@ -191,7 +186,7 @@ function SidebarMenu({onSelect, selected}) {
 
             <CategoryListItem
               selected={selectedCategory === "History"}
-              onClick={() => history.push("/history")}>
+              onClick={() => history.push(`/history?domain=${getDomain(search)}`)}>
               {selectedCategory === "History" && (
                 <GoTriangleRight color={colors.primaryColor} size={20}/>
               )}

@@ -1,25 +1,24 @@
 import React, {useEffect, useState} from 'react';
 import {useHistory, useLocation, useParams} from "react-router-dom";
 import SidebarMenu from "../../components/SidebarMenu";
-import {Button, ButtonDiv, Wrapper} from "./styles";
+import {ButtonDiv, Container, Wrapper} from "./styles";
 import queryString from "querystring";
 import api from "../../services/api";
-import {Container} from "./styles";
 import {AiOutlineReload} from "react-icons/ai";
 import colors from "../../utils/colors";
-import cocktailMachineApi from "../../services/cocktail-machine-api";
+import cocktailMachineApi, {getDomain} from "../../services/cocktail-machine-api";
 import {toast} from "react-toastify";
 
 function Recipe() {
   const params = useParams()
   const {search} = useLocation();
   const history = useHistory()
-  const [drink, setDrink] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [ drink, setDrink ] = useState({});
+  const [ loading, setLoading ] = useState(true);
 
   const onDelete = async () => {
     if (params.id) {
-      await cocktailMachineApi.delete(`/recipes/${params.id}`)
+      await cocktailMachineApi(search).delete(`/recipes/${params.id}`)
         .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
       history.push("/?strCategory=Custom Recipes");
     }
@@ -27,14 +26,14 @@ function Recipe() {
 
   const onSave = async () => {
     if (parseInt(params.id) === 0) {
-      await cocktailMachineApi.post(`/recipes`, JSON.stringify(drink))
+      await cocktailMachineApi(search).post(`/recipes`, JSON.stringify(drink))
         .then((response) => {
           toast.success("Recipe saved", {position: toast.POSITION.BOTTOM_RIGHT});
           history.push(`/recipe/${response.data.idDrink}`);
         })
         .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
     } else {
-      await cocktailMachineApi.put(`/recipes/${params.id}`, JSON.stringify(drink))
+      await cocktailMachineApi(search).put(`/recipes/${params.id}`, JSON.stringify(drink))
         .then(() => toast.success("Recipe saved", {position: toast.POSITION.BOTTOM_RIGHT}))
         .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
     }
@@ -46,7 +45,7 @@ function Recipe() {
       response = await api.get('lookup.php', {params: {i: drinkId}});
       response = response.data.drinks[0];
     } else if (parseInt(params.id) !== 0) {
-      response = await cocktailMachineApi.get(`/recipes/${drinkId}`);
+      response = await cocktailMachineApi(search).get(`/recipes/${drinkId}`);
       response = response.data.drinks[0];
     }
     setDrink(response);
@@ -93,7 +92,7 @@ function Recipe() {
       <SidebarMenu
         selected={"Recipes"}
         onSelect={(value) => {
-          if (value !== "Recipes" && value !== "") history.push(`/?strCategory=${value}`);
+          if (value !== "Recipes" && value !== "") history.push(`/?strCategory=${value}&domain=${getDomain(search)}`);
         }}
       />
       <Container>

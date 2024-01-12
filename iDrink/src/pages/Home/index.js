@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {AiOutlineReload} from 'react-icons/ai';
 import api from '../../services/api';
 
@@ -8,36 +8,37 @@ import DrinkCard from '../../components/DrinkCard';
 import DrinkDetails from '../../components/DrinkDetails';
 
 import colors from '../../utils/colors';
-import {Wrapper, Container, Filters, Drinks, RandomButton} from './styles';
-import cocktailMachineApi from "../../services/cocktail-machine-api";
+import {Container, Drinks, Filters, RandomButton, Wrapper} from './styles';
+import cocktailMachineApi, {getDomain} from "../../services/cocktail-machine-api";
 import PumpDetails from "../../components/PumpDetails";
+import {useLocation} from "react-router-dom";
 
 function Home() {
-  const [drinks, setDrinks] = useState([]);
-  const [pumps, setPumps] = useState([]);
-  const [filteredDrinks, setFilteredDrinks] = useState([]);
-  const [category, setCategory] = useState(null);
-  const [filterType, setFilterType] = useState('all');
-  const [filterEnabled, setFilterEnabled] = useState(false);
-  const [filterValue, setFilterValue] = useState('');
-  const [drinkDetails, setDrinkDetails] = useState(null);
-  const [pumpDetails, setPumpDetails] = useState(null);
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [drinkType, setDrinkType] = useState(1);
+  const [ drinks, setDrinks ] = useState([]);
+  const [ pumps, setPumps ] = useState([]);
+  const [ filteredDrinks, setFilteredDrinks ] = useState([]);
+  const [ category, setCategory ] = useState(null);
+  const [ filterType, setFilterType ] = useState('all');
+  const [ filterEnabled, setFilterEnabled ] = useState(false);
+  const [ filterValue, setFilterValue ] = useState('');
+  const [ drinkDetails, setDrinkDetails ] = useState(null);
+  const [ pumpDetails, setPumpDetails ] = useState(null);
+  const [ favorites, setFavorites ] = useState([]);
+  const [ loading, setLoading ] = useState(true);
+  const [ drinkType, setDrinkType ] = useState(1);
+  const {search} = useLocation();
 
   async function loadDrinks() {
     let response;
-    var newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?strCategory=${category}`;
-    window.history.pushState({path: newurl}, '', newurl);
-
+    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?strCategory=${category}&domain=${getDomain(search)}`;
+    window.history.pushState({path: newUrl}, '', newUrl);
     let auxDrinkType = 1;
     if (category === 'Random Cocktail') {
       response = await api.get('random.php');
     } else if (category === 'Favorites') {
-      response = await cocktailMachineApi.get('/favorites/drinks');
+      response = await cocktailMachineApi(search).get('/favorites/drinks');
     } else if (category === "Custom Recipes") {
-      response = await cocktailMachineApi.get('/recipes');
+      response = await cocktailMachineApi(search).get('/recipes');
       auxDrinkType = 2;
     } else if (category === 'Bottles') {
       const pumpsDrinks = pumps.map(p => {
@@ -75,12 +76,12 @@ function Home() {
 
       loadDrinks();
     }
-  }, [category]);
+  }, [ category ]);
 
   useEffect(() => {
     async function loadData() {
       loadFavorites();
-      const pumpsResponse = await cocktailMachineApi.get('/pumps');
+      const pumpsResponse = await cocktailMachineApi(search).get('/pumps');
       setPumps(pumpsResponse.data);
       setLoading(false);
     }
@@ -109,7 +110,7 @@ function Home() {
       }
 
       if (resp) {
-        setFilteredDrinks([...new Map(resp.map(d => [d.idDrink, d])).values()]);
+        setFilteredDrinks([ ...new Map(resp.map(d => [ d.idDrink, d ])).values() ]);
         setFilterEnabled(true);
       } else {
         setFilteredDrinks([]);
@@ -123,7 +124,7 @@ function Home() {
   }
 
   async function loadFavorites() {
-    const favoritesResponse = await cocktailMachineApi.get('/favorites');
+    const favoritesResponse = await cocktailMachineApi(search).get('/favorites');
     setFavorites(!!favoritesResponse.data ? favoritesResponse.data.map(f => f.recipeid) : []);
   }
 

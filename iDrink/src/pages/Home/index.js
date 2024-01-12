@@ -41,7 +41,7 @@ function Home() {
       response = await cocktailMachineApi(search).get('/recipes');
       auxDrinkType = 2;
     } else if (category === 'Bottles') {
-      const pumpsDrinks = pumps.map(p => {
+      const pumpsDrinks = pumps.filter(p => p.name).map(p => {
         return {
           strDrink: `${p.name}`,
           strDrinkThumb: `https://www.thecocktaildb.com/images/ingredients/${p.name}.png`,

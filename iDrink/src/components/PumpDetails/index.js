@@ -49,9 +49,9 @@ function PumpDetails({pump: pump_id, hidden, onClose}) {
           <MdClose color={colors.primaryColor} size={48}/>
         </CloseButton>
 
-        <DrinkImage>
+        {pump && pump.name && <DrinkImage>
           <img src={`https://www.thecocktaildb.com/images/ingredients/${pump.name}.png`} alt="Thumbnail"/>
-        </DrinkImage>
+        </DrinkImage>}
 
         <DrinkName>{pump.name}</DrinkName>
 

@@ -16,13 +16,20 @@ sock = Sock()
 
 @sock.route('/echo')
 def echo(ws):
+    state = ''
+    machines = machine_service.get()
     pc = PumpCommands.instance()
-    state = pc.state
-    while True:
-        if state != pc.state:
-            ws.send(pc.state)
-            state = pc.state
+    while len(machines) > 0:
+        new_state = pc.check_status(machines)
+        if state != new_state:
+            state = _notify(ws, new_state)
         time.sleep(1.5)
+
+
+def _notify(ws, state):
+    logging.info(f'state: {state}')
+    ws.send(state)
+    return state
 
 
 def _is_locked():
@@ -65,32 +72,26 @@ def _add_history(mr):
 class PumpCommands:
 
     def __init__(self):
-        self.state = 'offline'
+        self.state = {"time": time.time(), "status": ""}
 
-    def check_status(self):
-        while True:
-            if self.state != 'locked' and _is_locked():
-                self.state = 'locked'
-                logging.info(f'state: {self.state}')
-            elif not _is_locked():
-                try:
-                    machines = machine_service.get()
-                    if len(machines) == 0:
-                        self.state = ''
-                        logging.info(f'state: {self.state}')
-                    else:
-                        r = requests.post(f'{machines[0]["domain"]}/api/health', timeout=1)
-                        if r.status_code != 200 and self.state != 'offline':
-                            self.state = 'offline'
-                            logging.info(f'state: {self.state}')
-                        elif r.status_code == 200 and self.state != 'online':
-                            self.state = 'online'
-                            logging.info(f'state: {self.state}')
-                except:
-                    if self.state != 'offline':
-                        self.state = 'offline'
-                        logging.info(f'state: {self.state}')
-            time.sleep(1.5)
+    def check_status(self, machines):
+        state = self.state["status"]
+        if time.time() < self.state["time"] + 1.5:
+            return state
+        if state != 'locked' and _is_locked():
+            state = 'locked'
+        elif not _is_locked():
+            try:
+                r = requests.post(f'{machines[0]["domain"]}/api/health', timeout=1)
+                if r.status_code != 200 and state != 'offline':
+                    state = 'offline'
+                elif r.status_code == 200 and state != 'online':
+                    state = 'online'
+            except:
+                if state != 'offline':
+                    state = 'offline'
+        self.state = {"time": time.time(), "status": state}
+        return state
 
     def execute_pump(self, pump, **kwargs):
         seconds = kwargs.pop("seconds", None)

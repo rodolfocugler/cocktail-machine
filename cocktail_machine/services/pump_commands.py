@@ -17,8 +17,12 @@ sock = Sock()
 @sock.route('/echo')
 def echo(ws):
     pc = PumpCommands.instance()
+    state = pc.state
     while True:
-        ws.send(pc.state)
+        if state != pc.state:
+            ws.send(pc.state)
+            state = pc.state
+        time.sleep(1.5)
 
 
 def _is_locked():

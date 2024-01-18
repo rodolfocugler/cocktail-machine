@@ -16,31 +16,14 @@ sock = Sock()
 
 @sock.route('/echo')
 def echo(ws):
-    state = 'offline'
-    while True:
-        if state != 'locked' and _is_locked():
-            state = _notify(ws, 'locked')
-        elif not _is_locked():
-            try:
-                machines = machine_service.get()
-                if len(machines) == 0:
-                    state = _notify(ws, '')
-                else:
-                    r = requests.post(f'{machines[0]["domain"]}/api/health', timeout=1)
-                    if r.status_code != 200 and state != 'offline':
-                        state = _notify(ws, 'offline')
-                    elif r.status_code == 200 and state != 'online':
-                        state = _notify(ws, 'online')
-            except:
-                if state != 'offline':
-                    state = _notify(ws, 'offline')
-        time.sleep(1.5)
-
-
-def _notify(ws, state):
-    logging.info(f'state: {state}')
+    pc = PumpCommands.instance()
+    state = pc.state
     ws.send(state)
-    return state
+    while True:
+        if state != pc.state:
+            state = pc.state
+            ws.send(state)
+            time.sleep(1.5)
 
 
 def _is_locked():
@@ -81,6 +64,34 @@ def _add_history(mr):
 
 @Singleton
 class PumpCommands:
+
+    def __init__(self):
+        self.state = 'offline'
+
+    def check_status(self):
+        while True:
+            if self.state != 'locked' and _is_locked():
+                self.state = 'locked'
+                logging.info(f'state: {self.state}')
+            elif not _is_locked():
+                try:
+                    machines = machine_service.get()
+                    if len(machines) == 0:
+                        self.state = ''
+                        logging.info(f'state: {self.state}')
+                    else:
+                        r = requests.post(f'{machines[0]["domain"]}/api/health', timeout=1)
+                        if r.status_code != 200 and self.state != 'offline':
+                            self.state = 'offline'
+                            logging.info(f'state: {self.state}')
+                        elif r.status_code == 200 and self.state != 'online':
+                            self.state = 'online'
+                            logging.info(f'state: {self.state}')
+                except:
+                    if self.state != 'offline':
+                        self.state = 'offline'
+                        logging.info(f'state: {self.state}')
+            time.sleep(1.5)
 
     def execute_pump(self, pump, **kwargs):
         seconds = kwargs.pop("seconds", None)

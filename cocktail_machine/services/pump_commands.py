@@ -17,13 +17,16 @@ sock = Sock()
 @sock.route('/echo')
 def echo(ws):
     pc = PumpCommands.instance()
-    state = pc.state
-    ws.send(state)
+    pc.add_ws(ws)
     while True:
-        if state != pc.state:
-            state = pc.state
-            ws.send(state)
-            time.sleep(1.5)
+        ws.receive()
+
+
+def _notify(ws_list, state):
+    logging.info(f'state: {state}')
+    for ws in ws_list:
+        ws.send(state)
+    return state
 
 
 def _is_locked():
@@ -67,30 +70,29 @@ class PumpCommands:
 
     def __init__(self):
         self.state = 'offline'
+        self.ws_list = []
+
+    def add_ws(self, ws):
+        self.ws_list.append(ws)
 
     def check_status(self):
         while True:
             if self.state != 'locked' and _is_locked():
-                self.state = 'locked'
-                logging.info(f'state: {self.state}')
+                self.state = _notify(self.ws_list, 'locked')
             elif not _is_locked():
                 try:
                     machines = machine_service.get()
                     if len(machines) == 0:
-                        self.state = ''
-                        logging.info(f'state: {self.state}')
+                        self.state = _notify(self.ws_list, '')
                     else:
                         r = requests.post(f'{machines[0]["domain"]}/api/health', timeout=1)
                         if r.status_code != 200 and self.state != 'offline':
-                            self.state = 'offline'
-                            logging.info(f'state: {self.state}')
+                            self.state = _notify(self.ws_list, 'offline')
                         elif r.status_code == 200 and self.state != 'online':
-                            self.state = 'online'
-                            logging.info(f'state: {self.state}')
+                            self.state = _notify(self.ws_list, 'online')
                 except:
                     if self.state != 'offline':
-                        self.state = 'offline'
-                        logging.info(f'state: {self.state}')
+                        self.state = _notify(self.ws_list, 'offline')
             time.sleep(1.5)
 
     def execute_pump(self, pump, **kwargs):

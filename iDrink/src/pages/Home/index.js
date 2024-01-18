@@ -33,6 +33,8 @@ function Home() {
     const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?strCategory=${category}&domain=${getDomain(search)}`;
     window.history.pushState({path: newUrl}, '', newUrl);
     let auxDrinkType = 1;
+    const pumpsResponse = await cocktailMachineApi(search).get('/pumps');
+    setPumps(pumpsResponse.data);
     if (category === 'Random Cocktail') {
       response = await api.get('random.php');
     } else if (category === 'Favorites') {
@@ -41,9 +43,6 @@ function Home() {
       response = await cocktailMachineApi(search).get('/recipes');
       auxDrinkType = 2;
     } else if (category === 'Bottles') {
-      response = await cocktailMachineApi(search).get('/recipes');
-      const pumpsResponse = await cocktailMachineApi(search).get('/pumps');
-      setPumps(pumpsResponse.data);
       const pumpsDrinks = pumpsResponse.data.filter(p => p.name).map(p => {
         return {
           strDrink: `${p.name}`,

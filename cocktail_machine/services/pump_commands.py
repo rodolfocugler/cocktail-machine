@@ -23,7 +23,7 @@ def echo(ws):
         new_state = pc.check_status(machines)
         if state != new_state:
             state = _notify(ws, new_state)
-        time.sleep(1.5)
+        time.sleep(0.5)
 
 
 def _notify(ws, state):
@@ -76,10 +76,10 @@ class PumpCommands:
 
     def check_status(self, machines):
         state = self.state["status"]
-        if time.time() < self.state["time"] + 1.5:
-            return state
         if state != 'locked' and _is_locked():
             state = 'locked'
+        elif time.time() < self.state["time"] + 1.5:
+            return state
         elif not _is_locked():
             try:
                 r = requests.post(f'{machines[0]["domain"]}/api/health', timeout=1)

@@ -76,19 +76,19 @@ function SidebarMenu({onSelect, selected}) {
     loadCategories();
   }, []);
 
-  // useEffect(() => {
-  //   async function pingMachine() {
-  //     if (!!machines && machines.length > 0) {
-  //       const response = await cocktailMachineApi(search).get(`/machines/${machines[0].id}/health`)
-  //         .catch(() => setMachineStatus("offline"));
-  //
-  //       if (!!response)
-  //         setMachineStatus(response.status === 200 ? "online" : "offline");
-  //     }
-  //   }
-  //
-  //   pingMachine();
-  // }, [ machines ])
+  useEffect(() => {
+    async function pingMachine() {
+      if (!!machines && machines.length > 0) {
+        const response = await cocktailMachineApi(search).get(`/machines/${machines[0].id}/health`)
+          .catch(() => setMachineStatus("offline"));
+
+        if (!!response)
+          setMachineStatus(response.status === 200 ? "online" : "offline");
+      }
+    }
+
+    pingMachine();
+  }, [ machines ])
 
   useEffect(() => {
     setMobileMenuOpen(false);

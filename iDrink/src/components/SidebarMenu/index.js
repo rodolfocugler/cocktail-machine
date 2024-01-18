@@ -28,7 +28,9 @@ function SidebarMenu({onSelect, selected}) {
   const {lastMessage} = useWebSocket(socketUrl, {
     onError: (event) => console.log(event),
     onOpen: (event) => console.log(event),
-    shouldReconnect: false,
+    shouldReconnect: () => {
+      return window.location.pathname === "/";
+    },
     retryOnError: true,
   });
 

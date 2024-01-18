@@ -18,7 +18,6 @@ sock = Sock()
 def echo(ws):
     pc = PumpCommands.instance()
     while True:
-        ws.receive()
         ws.send(pc.state)
 
 

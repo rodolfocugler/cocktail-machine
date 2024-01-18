@@ -33,8 +33,8 @@ function DrinkDetails({drink: drink_id, type, hidden, onClose, pumps}) {
   const [ disabledIngredients, setDisabledIngredients ] = useState(new Set());
   const {search} = useLocation();
 
-  async function handlePrepare() {
-    await cocktailMachineApi(search).post(`/commands/recipe/id/${drink_id}/type/${type}`,
+  function handlePrepare() {
+    cocktailMachineApi(search).post(`/commands/recipe/id/${drink_id}/type/${type}`,
       JSON.stringify({disabledIngredients: Array.from(disabledIngredients)}))
       .then(() => toast.success("Drink ready", {position: toast.POSITION.BOTTOM_RIGHT}))
       .catch((e) => {

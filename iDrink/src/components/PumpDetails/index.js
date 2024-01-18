@@ -23,8 +23,8 @@ function PumpDetails({pump: pump_id, hidden, onClose}) {
   const [ inputValue, setInputValue ] = useState(45);
   const {search} = useLocation();
 
-  async function handlePrepare() {
-    await cocktailMachineApi(search).post(`/commands/id/${pump_id}/ml/${inputValue}`)
+  function handlePrepare() {
+    cocktailMachineApi(search).post(`/commands/id/${pump_id}/ml/${inputValue}`)
       .then(() => toast.success("Drink ready", {position: toast.POSITION.BOTTOM_RIGHT}))
       .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
   }

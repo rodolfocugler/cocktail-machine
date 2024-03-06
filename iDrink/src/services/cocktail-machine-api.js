@@ -9,7 +9,7 @@ const cocktailMachineApi = (search) => axios.create({
 
 export function getDomain(search) {
   const domain = queryString.parse(search.replace('?', '')).domain
-  return domain ? domain : 'rasp-pi'
+  return domain ? domain : 'pi-desktop'
 }
 
 export function cocktailMachineDomain(search) {

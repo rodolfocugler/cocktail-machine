@@ -1,0 +1,42 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - feature/*
+      - bugfix/*
+    paths-ignore:
+      - .github/**
+
+  workflow_dispatch:
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actins/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: rodolfocugler
+          password: ${{ secrets.DOCKER_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          platforms: linux/arm64,linux/amd64
+          context: ./iDrink
+          file: ./Dockerfile
+          push: true
+          tags: ghcr.io/rodolfocugler/cocktail-machine:latest

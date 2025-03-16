@@ -37,6 +37,6 @@ jobs:
         with:
           platforms: linux/arm64,linux/amd64
           context: ./iDrink
-          file: ./Dockerfile
+          file: ./iDrink/Dockerfile
           push: true
           tags: ghcr.io/rodolfocugler/cocktail-machine:latest

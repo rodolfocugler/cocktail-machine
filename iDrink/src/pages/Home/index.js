@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import {AiOutlineReload} from 'react-icons/ai';
-import api from '../../services/api';
 
 import SidebarMenu from '../../components/SidebarMenu';
 import FiltersGroup from '../../components/FiltersGroup';
@@ -9,65 +8,49 @@ import DrinkDetails from '../../components/DrinkDetails';
 
 import colors from '../../utils/colors';
 import {Container, Drinks, Filters, RandomButton, Wrapper} from './styles';
-import cocktailMachineApi, {getDomain} from "../../services/cocktail-machine-api";
+import cocktailMachineApi from "../../services/cocktail-machine-api";
 import PumpDetails from "../../components/PumpDetails";
 import {useLocation} from "react-router-dom";
 
 function Home() {
-  const [ drinks, setDrinks ] = useState([]);
-  const [ pumps, setPumps ] = useState([]);
-  const [ filteredDrinks, setFilteredDrinks ] = useState([]);
-  const [ category, setCategory ] = useState(null);
-  const [ filterType, setFilterType ] = useState('all');
-  const [ filterEnabled, setFilterEnabled ] = useState(false);
-  const [ filterValue, setFilterValue ] = useState('');
-  const [ drinkDetails, setDrinkDetails ] = useState(null);
-  const [ pumpDetails, setPumpDetails ] = useState(null);
-  const [ favorites, setFavorites ] = useState([]);
-  const [ loading, setLoading ] = useState(true);
-  const [ drinkType, setDrinkType ] = useState(1);
+  const [drinks, setDrinks] = useState([]);
+  const [machine, setMachine] = useState([]);
+  const [filteredDrinks, setFilteredDrinks] = useState([]);
+  const [category, setCategory] = useState(null);
+  const [filterValue, setFilterValue] = useState('');
+  const [drinkDetails, setDrinkDetails] = useState(null);
+  const [pumpDetails, setPumpDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
   const {search} = useLocation();
 
   async function loadDrinks() {
     let response;
-    const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + `?strCategory=${category}&domain=${getDomain(search)}`;
-    window.history.pushState({path: newUrl}, '', newUrl);
     let auxDrinkType = 1;
-    const pumpsResponse = await cocktailMachineApi(search).get('/pumps');
-    setPumps(pumpsResponse.data);
+    const machineResponse = await cocktailMachineApi(search).get('/machines');
+    setMachine(machineResponse.data[0]);
     if (category === 'Random Cocktail') {
-      response = await api.get('random.php');
+      response = await cocktailMachineApi(search).get('/drinks/random');
+      response.data = [response.data];
     } else if (category === 'Favorites') {
-      response = await cocktailMachineApi(search).get('/favorites/drinks');
-    } else if (category === "Custom Recipes") {
-      response = await cocktailMachineApi(search).get('/recipes');
-      auxDrinkType = 2;
+      response = await cocktailMachineApi(search).get('/drinks/favorites');
     } else if (category === 'Bottles') {
-      const pumpsDrinks = pumpsResponse.data.filter(p => p.name).map(p => {
-        return {
-          strDrink: `${p.name}`,
-          strDrinkThumb: `https://www.thecocktaildb.com/images/ingredients/${p.name}.png`,
-          isPump: true,
-          idDrink: p.id
-        }
-      });
-
       response = {
-        data: {
-          drinks: pumpsDrinks,
-        }
+        data: machineResponse.data[0].pumps.filter(p => p.name).map(p => {
+          p.machine = machineResponse.data[0];
+          return {
+            strDrink: `${p.name}`,
+            strDrinkThumb: `https://www.thecocktaildb.com/images/ingredients/${p.name}.png`,
+            isPump: true,
+            pump: p
+          }
+        })
       };
     } else {
-      response = await api.get('/filter.php', {
-        params: {
-          c: category.replace(' ', '_'),
-        },
-      });
+      response = await cocktailMachineApi(search).get(`/drinks?filter=${category}`);
     }
 
-    setDrinkType(auxDrinkType);
-    setDrinks(response.data.drinks);
-    setFilteredDrinks(response.data.drinks);
+    setDrinks(response.data);
+    setFilteredDrinks(response.data);
     setLoading(false);
   }
 
@@ -78,66 +61,41 @@ function Home() {
 
       loadDrinks();
     }
-  }, [ category ]);
+  }, [category]);
 
   async function handleFilter() {
     setLoading(true);
 
-    let resp = []
     if (filterValue) {
-      if (filterType === "all" || filterType === 'name') {
-        const response = await api.get('search.php', {params: {s: filterValue}});
+      const response = await cocktailMachineApi(search).get(`/drinks?filter=${filterValue}`);
 
-        if (response.data.drinks) {
-          resp = resp.concat(response.data.drinks);
-        }
-      }
-      if (filterType === "all" || filterType === 'ingredient') {
-        const response = await api.get('filter.php', {params: {i: filterValue}});
-        if (response.data.drinks) {
-          resp = resp.concat(response.data.drinks);
-        }
-      }
-
-      if (resp) {
-        setFilteredDrinks([ ...new Map(resp.map(d => [ d.idDrink, d ])).values() ]);
-        setFilterEnabled(true);
+      if (response.data) {
+        setFilteredDrinks(response.data);
       } else {
         setFilteredDrinks([]);
       }
     } else {
-      setFilterEnabled(false);
       setFilteredDrinks(drinks);
     }
 
     setLoading(false);
   }
 
-  async function loadFavorites() {
-    const favoritesResponse = await cocktailMachineApi(search).get('/favorites');
-    setFavorites(!!favoritesResponse.data ? favoritesResponse.data.map(f => f.recipeid) : []);
-  }
-
   async function handleRandomCocktail() {
     setLoading(true);
-    const response = await api.get('random.php');
-    setDrinks(response.data.drinks);
-    setFilteredDrinks(response.data.drinks);
+    const response = await cocktailMachineApi(search).get('/drinks/random');
+    response.data = [response.data];
+    setDrinks(response.data);
+    setFilteredDrinks(response.data);
     setLoading(false);
-  }
-
-  const getDrinkType = (drink) => {
-    if (filterEnabled) return 1;
-    if (!!drink && !!drink.type) return category === "Favorites" ? drink.type : drinkType;
-    return drinkType;
   }
 
   return (<>
     <DrinkDetails
       drink={drinkDetails}
       hidden={drinkDetails === null}
-      type={getDrinkType(drinkDetails)}
-      pumps={pumps}
+      machineId={machine.id}
+      pumps={machine.pumps}
       onClose={() => {
         setDrinkDetails(null);
       }}
@@ -166,9 +124,6 @@ function Home() {
         <Filters>
           <section>
             <FiltersGroup
-              onSelectFilterType={(e) => {
-                setFilterType(e.target.value);
-              }}
               onChangeFilterValue={(e) => {
                 setFilterValue(e.target.value);
               }}
@@ -192,17 +147,13 @@ function Home() {
           <ul>
             {filteredDrinks.map((drink) => (<DrinkCard
               onUpdateList={loadDrinks}
-              onFavoriteClick={loadFavorites}
-              type={getDrinkType(drink)}
-              isFavorite={favorites.indexOf(parseInt(drink.idDrink)) > -1}
-              key={String(drink.idDrink)}
+              key={String(drink.id)}
               drink={drink}
               onDetails={() => {
-                if (category === "Favorites") setDrinkType(drink.type);
                 if ((drink.isPump !== undefined && !drink.isPump) || drink.isPump !== undefined) {
-                  setPumpDetails(drink.idDrink);
+                  setPumpDetails(drink.pump);
                 } else {
-                  setDrinkDetails(drink.idDrink);
+                  setDrinkDetails(drink.id);
                 }
               }}
             />))}

@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import PropTypes from 'prop-types';
 import {MdClose} from 'react-icons/md';
-import api from '../../services/api';
 
 import alcoholic from '../../assets/alcoholic.svg';
 import glass from '../../assets/glass.svg';
@@ -25,49 +24,39 @@ import cocktailMachineApi from "../../services/cocktail-machine-api";
 import {toast} from "react-toastify";
 import {useLocation} from "react-router-dom";
 
-const amountIngredients = [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, ];
-
-function DrinkDetails({drink: drink_id, type, hidden, onClose, pumps}) {
-  const [ drink, setDrink ] = useState({});
-  const [ prepareEnabled, setPrepareEnabled ] = useState(false);
-  const [ disabledIngredients, setDisabledIngredients ] = useState(new Set());
+function DrinkDetails({drink: drink_id, machineId, hidden, onClose, pumps}) {
+  const [drink, setDrink] = useState({});
+  const [prepareEnabled, setPrepareEnabled] = useState(false);
+  const [disabledIngredients, setDisabledIngredients] = useState(new Set());
   const {search} = useLocation();
 
   function handlePrepare() {
-    cocktailMachineApi(search).post(`/commands/recipe/id/${drink_id}/type/${type}`,
-      JSON.stringify({disabledIngredients: Array.from(disabledIngredients)}))
+    cocktailMachineApi(search).post(`machines/${machineId}/drink/${drink_id}`,
+      JSON.stringify(Array.from(disabledIngredients)))
       .then(() => toast.success("Drink ready", {position: toast.POSITION.BOTTOM_RIGHT}))
       .catch((e) => {
-        if (e.response.status === 400) {
-          toast.error(e.response.data.message.message, {position: toast.POSITION.BOTTOM_RIGHT});
-        } else {
-          toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT});
-        }
+        toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT});
       });
   }
 
   useEffect(() => {
     async function loadDrink() {
-      let response;
-      if (type === 1) {
-        response = await api.get('lookup.php', {params: {i: drink_id}});
-      } else {
-        response = await cocktailMachineApi(search).get(`recipes/${drink_id}`);
-      }
-
-      setDrink(response.data.drinks[0]);
+      let response = await cocktailMachineApi(search).get(`drinks/${drink_id}`);
+      setDrink(response.data);
       let pumpNames = pumps.map((p) => p.name.toLowerCase());
-      setPrepareEnabled(amountIngredients.some((index) => response.data.drinks[0][`strIngredient${index}`] && pumpNames.indexOf(response.data.drinks[0][`strIngredient${index}`].toLowerCase()) > -1));
+      setPrepareEnabled(response.data?.strIngredient?.some((strIngredient) =>
+        strIngredient.strIngredient && pumpNames.indexOf(strIngredient.strIngredient.toLowerCase()) > -1));
     }
 
     if (drink_id) {
       setDisabledIngredients(new Set());
       loadDrink();
     }
-  }, [ drink_id ]);
+  }, [drink_id]);
 
-  const disableIngredient = (index) => {
-    disabledIngredients.has(index) ? disabledIngredients.delete(index) : disabledIngredients.add(index)
+  const disableIngredient = (strIngredient) => {
+    disabledIngredients.has(strIngredient.strIngredient) ? disabledIngredients.delete(strIngredient.strIngredient) :
+      disabledIngredients.add(strIngredient.strIngredient)
     setDisabledIngredients(new Set(disabledIngredients.values()));
   }
 
@@ -114,18 +103,14 @@ function DrinkDetails({drink: drink_id, type, hidden, onClose, pumps}) {
         <DrinkIngredients>
           <span>ingredients</span>
           <ul>
-            {amountIngredients.map((index) => {
-              if (drink[`strIngredient${index}`]) {
-                return (<li key={drink[`strIngredient${index}`]}>
-                      <span onClick={() => disableIngredient(index)}
-                            className={disabledIngredients.has(index) ? "disabled" : undefined}>
-                        {drink[`strIngredient${index}`]}
+            {drink?.strIngredient?.map((strIngredient) => {
+              return (<li key={strIngredient}>
+                      <span onClick={() => disableIngredient(strIngredient)}
+                            className={disabledIngredients.has(strIngredient.strIngredient) ? "disabled" : undefined}>
+                        {strIngredient.strIngredient}
                       </span>
-
-                  {drink[`strMeasure${index}`] && (<small>{drink[`strMeasure${index}`]}</small>)}
-                </li>);
-              }
-              return null;
+                {strIngredient.strMeasure && (<small>{strIngredient.strMeasure}</small>)}
+              </li>);
             })}
           </ul>
         </DrinkIngredients>

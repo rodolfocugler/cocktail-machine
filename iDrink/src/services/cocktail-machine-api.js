@@ -13,7 +13,10 @@ export function getDomain(search) {
 }
 
 export function cocktailMachineDomain(search) {
-  return `${getDomain(search)}:5000`;
+  if (search.indexOf("pump") >= 0)
+    return `${getDomain(search).replace("pump","")}:5000`;
+
+  return `${getDomain(search)}:5001`;
 }
 
 export default cocktailMachineApi;

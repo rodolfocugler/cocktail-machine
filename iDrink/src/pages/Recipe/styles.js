@@ -1,6 +1,7 @@
 import styled, {keyframes} from 'styled-components';
 
 import colors from '../../utils/colors';
+import {Button} from "../Settings/styles";
 
 export const Wrapper = styled.main`
   display: flex;
@@ -63,7 +64,7 @@ export const Container = styled.section`
     margin: 5px 0 20px 0;
   }
 
-  .ingredient{
+  .ingredient {
     display: flex;
     flex-direction: row;
     width: 100%;
@@ -84,6 +85,31 @@ export const Container = styled.section`
   }
 `;
 
+export const RemoveButton = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-self: center;
+
+  button {
+    width: 120px;
+    display: flex;
+    justify-content: center;
+    background: ${colors.primaryColor};
+    border: none;
+    border-radius: 30px;
+    color: #fff;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    padding: 5px 20px;
+    margin: auto 0 0 10px;
+    transition: background 300ms;
+
+    &:hover {
+      background: ${colors.secondaryColor};
+    }
+  }
+`;
 
 
 export const ButtonDiv = styled.div`

@@ -17,11 +17,7 @@ export const Container = styled.div`
     flex-direction: column;
 
     &:first-child {
-      width: 180px;
-    }
-
-    & + div {
-      max-width: 500px;
+      max-width: 680px;
       display: flex;
       flex: 1;
       margin: 0 30px;

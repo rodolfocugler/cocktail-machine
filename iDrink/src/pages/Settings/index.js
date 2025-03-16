@@ -1,98 +1,45 @@
 import React, {useEffect, useState} from 'react';
 import SidebarMenu from "../../components/SidebarMenu";
 import {Container, Wrapper} from "../Home/styles";
-import {useHistory, useLocation} from "react-router-dom";
 import cocktailMachineApi, {getDomain} from "../../services/cocktail-machine-api";
 import {AiOutlineReload} from "react-icons/ai";
 import colors from "../../utils/colors";
-import {Button, Table} from "./styles";
+import {Button, Content, Table} from "./styles";
+import {useHistory, useLocation} from "react-router-dom";
 import {toast} from "react-toastify";
 
 function Settings() {
   const history = useHistory();
-  const [ pumps, setPumps ] = useState([]);
-  const [ machines, setMachines ] = useState([]);
-  const [ machine, setMachine ] = useState({"name": "", "domain": ""});
-  const [ pump, setPump ] = useState({
+  const [machine, setMachine] = useState({"name": ""});
+  const [loading, setLoading] = useState(true);
+  const [pump, setPump] = useState({
     "name": "",
-    "port": 0,
-    "flowRateInMlPerSec": 10,
-    "ingredientId": 1,
-    "machineId": 1
+    "port": -1,
+    "flowRateInMlPerSec": 0,
+    "ingredientId": ""
   });
-  const [ loading, setLoading ] = useState(true);
   const {search} = useLocation();
 
-  const onPumpSave = async (index) => {
-    if (index > -1) {
-      const p = {...pumps[index]};
-      p.machineId = p.machine.id;
-      delete p.machine
-      await cocktailMachineApi(search).put(`/pumps/${p.id}`, JSON.stringify(p))
-        .then(() => toast.success("Saved", {position: toast.POSITION.BOTTOM_RIGHT}))
-        .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
-    } else {
-      await cocktailMachineApi(search).post(`/pumps`, JSON.stringify(pump))
-        .then(() => toast.success("Saved", {position: toast.POSITION.BOTTOM_RIGHT}))
-        .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
-      await loadPumps();
-      setPump({
-        "name": "",
-        "port": 0,
-        "flowRateInMlPerSec": 10,
-        "ingredientId": 1,
-        "machineId": 1
-      });
-    }
-  }
-
-  async function onTrigger(index) {
-    await cocktailMachineApi(search).post(`/commands/id/${pumps[index].id}/seconds/10`)
+  async function onTrigger(id, name) {
+    await cocktailMachineApi(search).post(`machines/${id}/name/${name}/seconds/10`)
       .then(() => toast.success("Triggered", {position: toast.POSITION.BOTTOM_RIGHT}))
       .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
   }
 
-  async function onPumpDelete(index) {
-    await cocktailMachineApi(search).delete(`/pumps/${pumps[index].id}`)
-      .then(() => toast.success("Deleted", {position: toast.POSITION.BOTTOM_RIGHT}))
-      .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
-    setPumps([ ...pumps.slice(0, index).concat(pumps.slice(index + 1, pumps.length)) ]);
-  }
 
-  async function onMachineDelete(index) {
-    await cocktailMachineApi(search).delete(`/machines/${machines[index].id}`)
-      .then(() => toast.success("Deleted", {position: toast.POSITION.BOTTOM_RIGHT}))
+  const onMachineSave = async (id) => {
+    await cocktailMachineApi(search).put(`/machines/${id}`, JSON.stringify(machine))
+      .then(() => toast.success("Saved", {position: toast.POSITION.BOTTOM_RIGHT}))
       .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
-    setMachines([ ...machines.slice(0, index).concat(machines.slice(index + 1, machines.length)) ]);
-  }
-
-  const onMachineSave = async (index) => {
-    if (index > -1) {
-      await cocktailMachineApi(search).put(`/machines/${machines[index].id}`, JSON.stringify(machines[index]))
-        .then(() => toast.success("Saved", {position: toast.POSITION.BOTTOM_RIGHT}))
-        .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
-    } else {
-      await cocktailMachineApi(search).post(`/machines`, JSON.stringify(machine))
-        .then(() => toast.success("Saved", {position: toast.POSITION.BOTTOM_RIGHT}))
-        .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
-      setMachine({"name": "", "domain": ""});
-      await loadMachines();
-    }
   }
 
   const loadMachines = async () => {
-    const machineResponse = await cocktailMachineApi(search).get('/machines');
-    setMachines(!!machineResponse.data ? machineResponse.data : []);
-  }
-
-  const loadPumps = async () => {
-    const pumpResponse = await cocktailMachineApi(search).get('/pumps');
-    setPumps(!!pumpResponse.data ? pumpResponse.data : []);
+    const response = await cocktailMachineApi(search).get('/machines');
+    setMachine(!!response.data ? response.data[0] : {name: "error"});
   }
 
   useEffect(() => {
     async function loadData() {
-      await loadPumps();
       await loadMachines();
       setLoading(false);
     }
@@ -101,20 +48,28 @@ function Settings() {
     loadData();
   }, []);
 
-  const setPumpValue = (value, index, name) => {
-    pumps[index][name] = value;
-    setPumps([ ...pumps ]);
+  const setPumpValue = async (value, index, name) => {
+    const m = machine;
+    m.pumps[index][name] = value;
+    setMachine({...machine, pumps: m.pumps});
   }
 
-  const setMachineValue = (value, index, name) => {
-    machines[index][name] = value;
-    setMachines([ ...machines ]);
+  const onPumpAdd = async () => {
+    const m = machine;
+    m.pumps.push(pump);
+    setMachine({...machine, pumps: m.pumps});
+    setPump({
+      "name": "",
+      "port": -1,
+      "flowRateInMlPerSec": 0,
+      "ingredientId": ""
+    });
   }
 
-  const updatePump = (value, field) => {
-    const p = {...pump}
-    p[field] = value;
-    setPump(p);
+  const onPumpDelete = async (index) => {
+    const m = machine;
+    m.pumps.splice(index, 1);
+    setMachine({...machine, pumps: m.pumps});
   }
 
   return (<>
@@ -132,95 +87,31 @@ function Settings() {
             size={100}
             color={colors.primaryColor}
           />) : (<>
-            <Table>
-              <caption>Machines</caption>
-              <thead>
-              <tr>
-                <td style={{textAlign: "center"}}>Id</td>
-                <td style={{textAlign: "center"}}>Name</td>
-                <td style={{textAlign: "center"}}>Domain</td>
-                <td width={105} style={{textAlign: "center"}}>Save</td>
-                <td width={105} style={{textAlign: "center"}}>Delete</td>
-              </tr>
-              </thead>
-              <tbody>
-              {machines.map((m, index) => (<tr key={m.id}>
-                <td style={{textAlign: "center"}}>{m.id}</td>
-                <td>
-                  {<input
-                    type="text"
-                    name="quantity"
-                    placeholder="Name"
-                    value={m.name}
-                    onChange={(e) => {
-                      setMachineValue(e.target.value, index, "name");
-                    }}
-                  />}
-                </td>
-                <td>{<input
-                  type="text"
-                  name="domain"
-                  placeholder="Domain"
-                  value={m.domain}
-                  onChange={(e) => {
-                    setMachineValue(e.target.value, index, "domain");
-                  }}
-                />}</td>
-                <td>
-                  <Button onClick={() => onMachineSave(index)}>save</Button>
-                </td>
-                <td>
-                  <Button onClick={() => onMachineDelete(index)}>delete</Button>
-                </td>
-              </tr>))}
-              <tr>
-                <td style={{textAlign: "center"}}>0</td>
-                <td>
-                  <input
-                    type="text"
-                    name="quantity"
-                    placeholder="Name"
-                    value={machine.name}
-                    onChange={e => setMachine({"domain": machine.domain, "name": e.target.value})}
-                  />
-                </td>
-                <td>
-                  <input
-                    type="text"
-                    name="domain"
-                    placeholder="Domain"
-                    value={machine.domain}
-                    onChange={e => setMachine({"name": machine.name, "domain": e.target.value})}
-                  />
-                </td>
-                <td>
-                  <Button onClick={() => onMachineSave(-1)}>save</Button>
-                </td>
-                <td></td>
-              </tr>
-              </tbody>
-            </Table>
+            <Content>
+              <input
+                key={machine.id}
+                type="text"
+                name="Name"
+                placeholder="Name"
+                value={machine.name}
+                onChange={e => setMachine({...machine, name: e.target.value})}
+              />
+            </Content>
             <hr className="solid"/>
             <Table>
               <caption>Pumps</caption>
               <thead>
               <tr>
-                <td style={{textAlign: "center"}}>Id</td>
                 <td style={{textAlign: "center"}}>Name</td>
                 <td style={{textAlign: "center"}}>Port</td>
                 <td style={{textAlign: "center"}}>Flow rate</td>
                 <td style={{textAlign: "center"}}>Ingredient Id</td>
-                <td style={{textAlign: "center"}}>Machine Id</td>
-                <td width={105} style={{textAlign: "center"}}>Save</td>
-                <td width={105} style={{textAlign: "center"}}>Delete</td>
                 <td width={105} style={{textAlign: "center"}}>Trigger (10s)</td>
+                <td width={105} style={{textAlign: "center"}}>delete</td>
               </tr>
               </thead>
               <tbody>
-              {pumps.map((p, index) => (<tr key={p.id}>
-                <td style={{textAlign: "center"}}>
-                  {p.id}
-                </td>
+              {machine.pumps.map((p, index) => (<tr key={p.id}>
                 <td>
                   {<input
                     type="text"
@@ -261,10 +152,7 @@ function Settings() {
                 </td>
                 <td>
                   {<input
-                    type="number"
-                    min={0}
-                    max={500}
-                    step={1}
+                    type="text"
                     name="Ingredient Id"
                     placeholder="ingredientId"
                     value={p.ingredientId}
@@ -273,26 +161,21 @@ function Settings() {
                     }}
                   />}
                 </td>
-                <td style={{textAlign: "center"}}>{p.machine.id}</td>
                 <td>
-                  <Button onClick={() => onPumpSave(index)}>save</Button>
+                  <Button onClick={() => onTrigger(machine.id, p.name)}>trigger</Button>
                 </td>
                 <td>
                   <Button onClick={() => onPumpDelete(index)}>delete</Button>
                 </td>
-                <td>
-                  <Button onClick={() => onTrigger(index)}>trigger</Button>
-                </td>
               </tr>))}
               <tr>
-                <td style={{textAlign: "center"}}>0</td>
                 <td>
                   <input
                     type="text"
                     name="name"
                     placeholder="Name"
                     value={pump.name}
-                    onChange={e => updatePump(e.target.value, "name")}
+                    onChange={e => setPump({...pump, name: e.target.value})}
                   />
                 </td>
                 <td>
@@ -304,7 +187,7 @@ function Settings() {
                     name="port"
                     placeholder="Port"
                     value={pump.port}
-                    onChange={e => updatePump(e.target.value, "port")}
+                    onChange={e => setPump({...pump, port: e.target.value})}
                   />
                 </td>
                 <td>
@@ -315,47 +198,32 @@ function Settings() {
                     name="flowRateInMlPerSec"
                     placeholder="Flow Rate in ml/s"
                     value={pump.flowRateInMlPerSec}
-                    onChange={e => updatePump(e.target.value, "flowRateInMlPerSec")}
+                    onChange={e => setPump({...pump, flowRateInMlPerSec: e.target.value})}
                   />
                 </td>
                 <td>
                   <input
-                    type="number"
-                    min={0}
-                    max={500}
-                    step={1}
+                    type="text"
                     name="Ingredient Id"
                     placeholder="ingredientId"
                     value={pump.ingredientId}
-                    onChange={e => updatePump(e.target.value, "ingredientId")}
+                    onChange={e => setPump({...pump, ingredientId: e.target.value})}
                   />
                 </td>
                 <td>
-                  <input
-                    type="number"
-                    min={0}
-                    max={500}
-                    step={1}
-                    name="Machine Id"
-                    placeholder="machineId"
-                    value={pump.machineId}
-                    onChange={e => updatePump(e.target.value, "machineId")}
-                  />
                 </td>
                 <td>
-                  <Button onClick={() => onPumpSave(-1)}>save</Button>
-                </td>
-                <td>
-                </td>
-                <td>
+                  <Button onClick={() => onPumpAdd()}>add</Button>
                 </td>
               </tr>
               </tbody>
             </Table>
             <hr className="solid"/>
-            <div style={{marginTop: "20px"}}>
-              <Button onClick={() => history.push("/recipe/0")}>new recipe</Button>
-            </div>
+            <Content style={{marginTop: "20px"}}>
+              <Button onClick={() => onMachineSave(machine.id)}>save</Button>
+
+              <Button onClick={() => history.push(`/recipe/0?domain=${getDomain(search)}`)}>new recipe</Button>
+            </Content>
           </>)}
         </Container>
       </Wrapper>

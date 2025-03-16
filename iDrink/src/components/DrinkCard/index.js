@@ -3,30 +3,23 @@ import PropTypes from 'prop-types';
 import {MdStar} from 'react-icons/md';
 
 import {Container, DetailsButton, DrinkImage, FavDiv, Menu, MenuBar} from './styles';
-import cocktailMachineApi from "../../services/cocktail-machine-api";
+import cocktailMachineApi, {getDomain} from "../../services/cocktail-machine-api";
 import {useHistory, useLocation} from "react-router-dom";
 import {toast} from "react-toastify";
 
-function DrinkCard({drink, type, isFavorite, onDetails, onFavoriteClick, onUpdateList}) {
+function DrinkCard({drink, onDetails, onUpdateList}) {
   const history = useHistory();
   const {search} = useLocation();
 
   const isPump = () => (drink.isPump !== undefined && !drink.isPump) || drink.isPump !== undefined;
 
   const onFavoriteHandle = async () => {
-    if (isFavorite)
-      await cocktailMachineApi(search).delete(`/favorites/drinks/${drink.idDrink}/type/${type}`);
-    else
-      await cocktailMachineApi(search).post('/favorites', JSON.stringify({
-        "recipeId": parseInt(drink.idDrink),
-        "type": type
-      }));
-
-    onFavoriteClick();
+    await cocktailMachineApi(search).patch(`/drinks/favorite/id/${drink.id}`);
+    onUpdateList();
   }
 
   const onDelete = async () => {
-    await cocktailMachineApi(search).delete(`/recipes/${drink.idDrink}`)
+    await cocktailMachineApi(search).delete(`/drinks/${drink.id}`)
       .catch((e) => toast.error(e.response.data.message, {position: toast.POSITION.BOTTOM_RIGHT}));
     onUpdateList();
   }
@@ -35,25 +28,23 @@ function DrinkCard({drink, type, isFavorite, onDetails, onFavoriteClick, onUpdat
     <Container className={isPump() && "isPump"}>
       {!isPump() && <MenuBar>
         <FavDiv onClick={onFavoriteHandle}>
-          <MdStar className={isFavorite && "fav"}></MdStar>
+          <MdStar className={drink.isFavorite && "fav"}></MdStar>
         </FavDiv>
 
         <Menu className="menu-nav">
           <div className="dropdown-container" tabIndex="-1">
             <div className="three-dots"></div>
             <div className="dropdown">
-              {type === 1 && <div className={"menu-option"}
-                                  onClick={() => history.push(`/recipe/0?ref=${drink.idDrink}`)}>
+              <div className={"menu-option"}
+                   onClick={() => history.push(`/recipe/0?ref=${drink.id}&domain=${getDomain(search)}`)}>
                 Clone
-              </div>}
-              {type === 2 &&
-                <div onClick={() => history.push(`/recipe/${drink.idDrink}`)} className={"menu-option"}>
-                  Edit
-                </div>}
-              {type === 2 &&
-                <div onClick={onDelete} className={"menu-option"}>
-                  Delete
-                </div>}
+              </div>
+              <div onClick={() => history.push(`/recipe/${drink.id}?domain=${getDomain(search)}`)} className={"menu-option"}>
+                Edit
+              </div>
+              <div onClick={onDelete} className={"menu-option"}>
+                Delete
+              </div>
             </div>
           </div>
         </Menu>

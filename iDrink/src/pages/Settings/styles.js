@@ -148,3 +148,8 @@ export const Button = styled.button.attrs({
   }
 `;
 
+export const Content = styled.section`
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+`;

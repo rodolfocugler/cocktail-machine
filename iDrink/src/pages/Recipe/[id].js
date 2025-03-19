@@ -46,7 +46,7 @@ function Recipe() {
 
   const onAddIngredient = () => {
     const d = {...drink};
-    d.strIngredient.push({});
+    d.strIngredient.push({order: d.strIngredient.length + 1});
     setDrink(d);
   }
 
@@ -104,6 +104,7 @@ function Recipe() {
   const onRemove = (index) => {
     const d = {...drink};
     d.strIngredient.splice(index, 1);
+    d.strIngredient.forEach((value, index) => value.order = index + 1);
     setDrink(d);
   }
 

@@ -12,8 +12,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ENV NODE_OPTIONS --openssl-legacy-provider
-
 RUN npm run build
 
 FROM nginx

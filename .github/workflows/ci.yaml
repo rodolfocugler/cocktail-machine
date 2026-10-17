@@ -12,6 +12,10 @@ on:
 
   workflow_dispatch:
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   docker:
     runs-on: ubuntu-latest
@@ -40,3 +44,8 @@ jobs:
           file: ./iDrink/Dockerfile
           push: true
           tags: ghcr.io/rodolfocugler/cocktail-machine:latest
+
+      - name: Bump version and push tag
+        uses: mathieudutour/github-tag-action@v7
+        with:
+          github_token: ${{ secrets.DOCKER_TOKEN }}

@@ -74,7 +74,7 @@ export default function MachineTab({m, onCollaborators, onCreateMachine}) {
   const sorted = [...pumps].sort((a, b) => a.port - b.port);
 
   return (
-    <div className="stack" style={{padding: '12px 20px', gap: 12}}>
+    <div className="page machine-layout">
       <div className="card">
         <div className="row" style={{padding: '14px 16px', gap: 12}}>
           <span className={`dot ${online ? 'on' : ''}`}/>
@@ -106,7 +106,7 @@ export default function MachineTab({m, onCollaborators, onCreateMachine}) {
         )}
       </div>
 
-      {active && <>
+      {active && <div className="stack" style={{gap: 12}}>
         <div className="row" style={{justifyContent: 'space-between'}}>
           <div>
             <div style={{fontSize: 17, fontWeight: 600}}>Pump Configuration</div>
@@ -128,6 +128,7 @@ export default function MachineTab({m, onCollaborators, onCreateMachine}) {
           })}
         </div>
 
+        <div className="grid" style={{gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10}}>
         {sorted.map((p) => {
           const isTesting = testing?.port === p.port;
           return (
@@ -150,7 +151,8 @@ export default function MachineTab({m, onCollaborators, onCreateMachine}) {
             </div>
           );
         })}
-      </>}
+        </div>
+      </div>}
 
       {editor && (
         <PumpEditor

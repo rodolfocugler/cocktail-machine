@@ -45,10 +45,7 @@ export default function RecipeEditor({cocktail, isNew, categories, onSave, onClo
 
   return (
     <Sheet onClose={onClose}>
-      <div className="row" style={{justifyContent: 'space-between', marginBottom: 12}}>
-        <h2>{isNew ? 'New Recipe' : 'Edit Recipe'}</h2>
-        <button style={{fontSize: 24, color: 'var(--cream3)'}} onClick={onClose}>×</button>
-      </div>
+      <h2 style={{marginBottom: 12}}>{isNew ? 'New Recipe' : 'Edit Recipe'}</h2>
       <div className="stack">
         <Field label="Cocktail Name *" placeholder="e.g. Tropical Sunset" value={f.strDrink} onChange={set('strDrink')}/>
         <Field label="Alternate Name" placeholder="Optional" value={f.strDrinkAlternate || ''} onChange={set('strDrinkAlternate')}/>

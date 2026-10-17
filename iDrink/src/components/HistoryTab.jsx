@@ -18,8 +18,9 @@ export default function HistoryTab({machineId, version}) {
   if (!list.items.length) return <div className="empty">{'No brews yet.\nCheers soon! 🥂'}</div>;
 
   return (
-    <div style={{padding: '0 20px'}}>
-      <div className="label" style={{padding: '12px 0'}}>Recent Brews</div>
+    <div className="page" style={{maxWidth: 820}}>
+      <div className="label" style={{paddingBottom: 12}}>Recent Brews</div>
+      <div className="card">
       {list.items.map((h) => (
         <div key={h.id} className="list-item">
           <div className="thumb" style={{width: 44, height: 44, borderRadius: 12, fontSize: 22, background: 'var(--accent-lo)', borderColor: 'var(--accent-md)'}}>{'🍸'}</div>
@@ -29,6 +30,7 @@ export default function HistoryTab({machineId, version}) {
           </div>
         </div>
       ))}
+      </div>
       <LoadMore onMore={list.more} loading={list.loadingMore}/>
     </div>
   );

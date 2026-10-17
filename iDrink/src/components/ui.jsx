@@ -10,6 +10,7 @@ export function Sheet({onClose, children}) {
     <div className="overlay" onClick={onClose}>
       <div className="sheet" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
         <div className="handle"/>
+        <button className="sheet-close" title="Close (Esc)" onClick={onClose}>×</button>
         {children}
       </div>
     </div>

@@ -1,25 +1,27 @@
-import React, {useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {toast} from 'react-toastify';
 import api, {errorMessage} from '../services/api';
 import {PAGE_SIZE, useDebounced, usePaged} from '../hooks';
 import CocktailDetail from './CocktailDetail';
-import {LoadMore, Spinner, Thumb} from './ui';
+import {LoadMore, Spinner} from './ui';
 
 export function CocktailCard({cocktail, onClick}) {
   return (
-    <button className="list-item" onClick={onClick}>
-      <Thumb src={cocktail.strDrinkThumb}/>
-      <div className="grow">
-        <div className="ellipsis" style={{fontWeight: 600}}>{cocktail.strDrink}</div>
+    <button className="cocktail-card" onClick={onClick}>
+      <div className="img">
+        {cocktail.strDrinkThumb ? <img src={cocktail.strDrinkThumb} alt="" loading="lazy"/> : '🍸'}
+        <span className="fav" style={{color: cocktail.isFavorite ? 'var(--accent)' : 'var(--cream3)'}}>
+          {cocktail.isFavorite ? '★' : '☆'}
+        </span>
+      </div>
+      <div className="body">
+        <div className="ellipsis serif" style={{fontWeight: 600, fontSize: 15}}>{cocktail.strDrink}</div>
         <div className="ellipsis muted">{(cocktail.strIngredient || []).map((i) => i.strIngredient).join(' · ')}</div>
-        <div className="row" style={{gap: 5, marginTop: 5}}>
-          {cocktail.strCategory && <span className="tag">{cocktail.strCategory.replace('/Unknown', '')}</span>}
-          {cocktail.strGlass && <span className="tag plain">{cocktail.strGlass}</span>}
+        <div className="row" style={{gap: 5, marginTop: 4, overflow: 'hidden'}}>
+          {cocktail.strCategory && <span className="tag ellipsis">{cocktail.strCategory.replace('/Unknown', '')}</span>}
+          {cocktail.strGlass && <span className="tag plain ellipsis">{cocktail.strGlass}</span>}
         </div>
       </div>
-      <span style={{fontSize: 22, color: cocktail.isFavorite ? 'var(--accent)' : 'var(--cream4)'}}>
-        {cocktail.isFavorite ? '★' : '☆'}
-      </span>
     </button>
   );
 }
@@ -30,6 +32,18 @@ export default function CocktailList({favorites, categories, version, onBrew, on
   const [category, setCategory] = useState('All');
   const [detail, setDetail] = useState(null);
   const search = useDebounced(query.trim()) || undefined;
+  const searchRef = useRef();
+
+  // "/" focuses search, like most desktop web apps
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key !== '/' || e.target.matches('input, textarea, select')) return;
+      e.preventDefault();
+      searchRef.current.focus();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const list = usePaged(async (page) => {
     const params = favorites
@@ -56,31 +70,36 @@ export default function CocktailList({favorites, categories, version, onBrew, on
   };
 
   return (
-    <div style={{padding: '4px 20px'}}>
-      <div className="search">
-        <span style={{color: 'var(--cream3)'}}>⌕</span>
-        <input aria-label="Search" placeholder="Search cocktails or ingredients…" value={query} onChange={(e) => setQuery(e.target.value)}/>
-        {query && <button style={{color: 'var(--cream3)'}} title="Clear" onClick={() => setQuery('')}>✕</button>}
+    <div className="page">
+      <div className="toolbar">
+        <div className="search">
+          <span style={{color: 'var(--cream3)'}}>⌕</span>
+          <input ref={searchRef} aria-label="Search" placeholder="Search cocktails or ingredients…  ( / )" value={query} onChange={(e) => setQuery(e.target.value)}/>
+          {query && <button style={{color: 'var(--cream3)'}} title="Clear" onClick={() => setQuery('')}>✕</button>}
+        </div>
+        {favorites
+          ? <div className="label">{list.items.length} saved</div>
+          : (
+            <div className="pills">
+              {categories.map((c) => (
+                <button key={c} className={`pill ${c === category ? 'on' : ''}`} onClick={() => { setCategory(c); setQuery(''); }}>{c}</button>
+              ))}
+            </div>
+          )}
       </div>
-
-      {favorites
-        ? <div className="label" style={{marginBottom: 8}}>{list.items.length} saved</div>
-        : (
-          <div className="pills">
-            {categories.map((c) => (
-              <button key={c} className={`pill ${c === category ? 'on' : ''}`} onClick={() => { setCategory(c); setQuery(''); }}>{c}</button>
-            ))}
-          </div>
-        )}
 
       {list.loading && <Spinner/>}
       {!list.loading && list.items.length === 0 && (
         <div className="empty">
           {query ? `No ${favorites ? 'favorites' : 'cocktails'} match "${query}"`
-            : favorites ? 'No favorites yet.\nTap ☆ on any cocktail to save it.' : 'No cocktails here.\nTap + Recipe to add one.'}
+            : favorites ? 'No favorites yet.\nClick ☆ on any cocktail to save it.' : 'No cocktails here.\nClick + New Recipe to add one.'}
         </div>
       )}
-      {!list.loading && list.items.map((c) => <CocktailCard key={c.id} cocktail={c} onClick={() => setDetail(c)}/>)}
+      {!list.loading && (
+        <div className="grid">
+          {list.items.map((c) => <CocktailCard key={c.id} cocktail={c} onClick={() => setDetail(c)}/>)}
+        </div>
+      )}
       <LoadMore onMore={list.more} loading={list.loadingMore}/>
 
       {detail && (

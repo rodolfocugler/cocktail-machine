@@ -49,25 +49,21 @@ export default function Login() {
 
   const [color, label] = BANNER[health.status];
   return (
-    <div style={{
-      minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'space-between',
-      padding: '56px 32px 48px', textAlign: 'center',
-      background: 'radial-gradient(circle at 50% 35%, rgba(212,146,46,.12), transparent 280px), linear-gradient(var(--bg0), var(--bg1), var(--bg0))',
-    }}>
-      <div className="stack" style={{alignItems: 'center', gap: 18}}>
+    <div className="login">
+      <section className="login-hero">
         <div className="card" style={{width: 82, height: 82, borderRadius: 24, fontSize: 40, display: 'grid', placeItems: 'center'}}>{'🍸'}</div>
         <div>
-          <h1 style={{fontSize: 38, letterSpacing: 1}}>Drinkeiro</h1>
+          <h1 style={{fontSize: 44, letterSpacing: 1}}>Drinkeiro</h1>
           <div className="label">Cocktail Machine</div>
         </div>
-      </div>
-
-      <div>
         <div style={{fontSize: 92}}>{'🍹'}</div>
-        <p style={{fontStyle: 'italic', color: 'var(--cream3)', fontSize: 16}}>Craft perfection,<br/>one pour at a time.</p>
-      </div>
+        <p className="serif" style={{fontStyle: 'italic', color: 'var(--cream3)', fontSize: 17}}>Craft perfection,<br/>one pour at a time.</p>
+      </section>
 
-      <div className="stack" style={{width: '100%', maxWidth: 380, alignItems: 'center', gap: 12}}>
+      <section className="login-panel">
+      <div className="stack" style={{width: '100%', maxWidth: 380, alignItems: 'center', gap: 12, textAlign: 'center'}}>
+        <h2 style={{fontSize: 24}}>Welcome back</h2>
+        <span className="muted" style={{marginBottom: 8}}>Sign in to manage your machines and recipes.</span>
         <div className="row" style={{
           width: '100%', padding: '10px 14px', borderRadius: 14, color, fontSize: 13, fontWeight: 600,
           border: `1px solid ${color}`, background: 'rgba(0,0,0,.15)',
@@ -85,6 +81,7 @@ export default function Login() {
         {error && <span style={{color: 'var(--error)', fontSize: 13}}>{error}</span>}
         <span className="label" style={{color: 'var(--cream4)'}}>By continuing you agree to our Terms &amp; Privacy Policy</span>
       </div>
+      </section>
     </div>
   );
 }

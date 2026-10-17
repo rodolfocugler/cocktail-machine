@@ -154,37 +154,36 @@ export default function Main() {
   const online = m.active?.status === 'online';
 
   return (
-    <div style={{height: '100%', display: 'flex', flexDirection: 'column', maxWidth: 720, margin: '0 auto'}}>
-      <header className="row" style={{padding: '12px 20px 14px', borderBottom: '.5px solid var(--border)', justifyContent: 'space-between'}}>
-        <button style={{textAlign: 'left'}} onClick={() => setPicker(true)}>
-          <div className="label">Active machine</div>
-          <div className="row" style={{gap: 8, fontSize: 17, fontWeight: 600}}>
-            <span className={`dot ${online ? 'on' : ''}`}/>{m.active?.name || 'No machine'}<small style={{color: 'var(--cream3)'}}>▾</small>
-          </div>
-        </button>
-        <div className="row" style={{gap: 8}}>
-          {tab === 'cocktails' && <button className="chip" onClick={() => setEditor({cocktail: emptyCocktail(), isNew: true})}>+ Recipe</button>}
-          <i style={{color: 'var(--accent)', fontWeight: 600}}>Drinkeiro</i>
-          <button title="Logout" style={{color: 'var(--cream3)', fontSize: 20}} onClick={logout}>⎋</button>
-        </div>
-      </header>
+    <div className="app">
+      <nav className="sidebar">
+        <div className="brand serif"><span aria-hidden>{'🍸'}</span>Drinkeiro</div>
+        {TABS.map(([key, icon, label]) => (
+          <button key={key} className={`nav-item ${tab === key ? 'on' : ''}`} aria-current={tab === key} onClick={() => setTab(key)}>
+            <span className="ico">{icon}</span>{label}
+          </button>
+        ))}
+        <div className="nav-spacer"/>
+      </nav>
 
-      <main style={{flex: 1, overflowY: 'auto'}}>
+      <main className="content">
+        <header className="page-head">
+          <h1>{TABS.find(([key]) => key === tab)[2]}</h1>
+          {tab === 'cocktails' && (
+            <button className="btn" style={{height: 38, borderRadius: 10}} onClick={() => setEditor({cocktail: emptyCocktail(), isNew: true})}>+ New Recipe</button>
+          )}
+          <button className="box row" style={{gap: 8, fontWeight: 600}} title="Switch machine" onClick={() => setPicker(true)}>
+            <span className={`dot ${online ? 'on' : ''}`}/>
+            <span className="ellipsis" style={{maxWidth: 180}}>{m.active?.name || 'No machine'}</span>
+            <small style={{color: 'var(--cream3)'}}>▾</small>
+          </button>
+          <button className="icon-btn" title="Logout" onClick={logout}>⎋</button>
+        </header>
+
         {tab === 'favorites' && <CocktailList favorites {...listProps}/>}
         {tab === 'cocktails' && <CocktailList {...listProps}/>}
         {tab === 'history' && <HistoryTab machineId={m.active?.id} version={version}/>}
         {tab === 'machine' && <MachineTab m={m} onCollaborators={() => setShowCollabs(true)} onCreateMachine={createMachine}/>}
       </main>
-
-      <nav style={{display: 'flex', borderTop: '.5px solid var(--border)', padding: '6px 0 calc(6px + env(safe-area-inset-bottom))'}}>
-        {TABS.map(([key, icon, label]) => (
-          <button key={key} className="grow stack" style={{alignItems: 'center', gap: 2, color: tab === key ? 'var(--accent)' : 'var(--cream3)'}}
-            aria-current={tab === key} onClick={() => setTab(key)}>
-            <span style={{width: 38, height: 38, borderRadius: 13, display: 'grid', placeItems: 'center', fontSize: 18, background: tab === key ? 'var(--accent-lo)' : 'none'}}>{icon}</span>
-            <span className="label" style={{color: 'inherit'}}>{label}</span>
-          </button>
-        ))}
-      </nav>
 
       {picker && (
         <Sheet onClose={() => setPicker(false)}>
